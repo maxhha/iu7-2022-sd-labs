@@ -51,3 +51,27 @@ Classic Auction Assistant
    - [Svelte](https://svelte.dev/) - фреймворк для создания быстрых одностраничных приложений.
 3. База данных: [PostgreSQL](https://www.postgresql.org/)
 4. Контейниризация: [Docker](https://www.docker.com/)
+
+## Описание типа приложения и выбранного технологического стека
+
+Проект представляет собой Web SPA.
+
+Стек:
+
+- [Golang](https://go.dev) + [Gin](https://gin-gonic.com)
+- [TypeScript](https://www.typescriptlang.org) + [Svelte](https://svelte.dev/)
+- [GraphQL](https://graphql.org) + [gqlgen](https://gqlgen.com) + [GraphQL Code Generator](https://www.graphql-code-generator.com)
+- [PostgreSQL](https://www.postgresql.org/) + [GORM](https://gorm.io)
+- [Docker](https://www.docker.com/) + [Docker Compose](https://docs.docker.com/compose)
+
+## Верхнеуровневое разбиение на компоненты
+
+![Верхнеуровневое разбиение на компоненты](./docs/components.drawio.svg)
+
+## UML диаграммы классов для компонента доступа к данным и компонента с бизнес-логикой
+
+![UML диаграммы классов для компонента доступа к данным и компонента с бизнес-логикой](./docs/uml-lab02-2.drawio.svg)
+
+## UML диаграммы «модельных» классов сущностей
+
+![UML диаграммы «модельных» классов сущностей](./docs/uml-lab02-3.drawio.svg)
