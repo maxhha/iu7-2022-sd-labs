@@ -1,0 +1,53 @@
+version: "3"
+
+tasks:
+  default: task --list-all
+
+  install:tools:
+    desc: Installs backend tools
+    cmds:
+      - cat tools.go | grep _ | awk -F'"' '{print $2}' | xargs -tI % go install %
+
+  gen:mocks:
+    desc: Generated mocks in backend
+    cmds:
+      - go generate -run="go run github.com/vektra/mockery/v2" ./...
+    sources:
+      - buisness/ports/**/*.go
+
+  test:
+    desc: Run test with colorful output
+    deps:
+      - gen:mocks
+    cmds:
+      - grc -c config/grc-test.conf go test {{.CLI_ARGS}}
+
+  dir:out:
+    desc: Creates out directiory for backend
+    cmds:
+      - mkdir -p out
+    status:
+      - test -d out
+
+  filter-cover:
+    desc: Filters generated files from coverage output
+    cmds:
+      - cat {{.IN}} | grep -v "_gen.go\|_suite.go\|generated.go\|.pb.go" > {{.OUT}}
+
+  test:unit:
+    desc: Run unit tests for backend
+    deps:
+      - dir:out
+      - gen:mocks
+    vars:
+      TMPOUT: ./out/unit-coverage.tmp.out
+      OUT: ./out/unit-coverage.out
+      HTML: ./out/unit-coverage.html
+    cmds:
+      - go test -coverprofile={{.TMPOUT}} ./...
+      - task: filter-cover
+        vars:
+          IN: "{{.TMPOUT}}"
+          OUT: "{{.OUT}}"
+      - go tool cover -html={{.OUT}} -o {{.HTML}}
+      - go tool cover -func={{.OUT}}

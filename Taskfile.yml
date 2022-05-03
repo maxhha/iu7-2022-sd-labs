@@ -1,0 +1,9 @@
+version: "3"
+
+includes:
+  b:
+    taskfile: src/backend/Taskfile.yml
+    dir: src/backend
+
+tasks:
+  default: task --list-all

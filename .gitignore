@@ -1,0 +1,5 @@
+# Directory with build or some results
+out
+
+# Taskfile cache
+.task
