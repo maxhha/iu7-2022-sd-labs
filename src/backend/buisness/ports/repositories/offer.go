@@ -32,5 +32,4 @@ type OfferRepository interface {
 	Get(id string) (entities.Offer, error)
 	Find(params *OfferFindParams) ([]entities.Offer, error)
 	Create(auction *entities.Offer) error
-	Update(id string, updateFn func(offer *entities.Offer) error) (entities.Offer, error)
 }

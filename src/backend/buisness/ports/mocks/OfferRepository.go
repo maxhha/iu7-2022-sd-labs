@@ -75,27 +75,6 @@ func (_m *OfferRepository) Get(id string) (entities.Offer, error) {
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: id, updateFn
-func (_m *OfferRepository) Update(id string, updateFn func(*entities.Offer) error) (entities.Offer, error) {
-	ret := _m.Called(id, updateFn)
-
-	var r0 entities.Offer
-	if rf, ok := ret.Get(0).(func(string, func(*entities.Offer) error) entities.Offer); ok {
-		r0 = rf(id, updateFn)
-	} else {
-		r0 = ret.Get(0).(entities.Offer)
-	}
-
-	var r1 error
-	if rf, ok := ret.Get(1).(func(string, func(*entities.Offer) error) error); ok {
-		r1 = rf(id, updateFn)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
-}
-
 // NewOfferRepository creates a new instance of OfferRepository. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewOfferRepository(t testing.TB) *OfferRepository {
 	mock := &OfferRepository{}
