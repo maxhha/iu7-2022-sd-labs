@@ -28,6 +28,7 @@ type ProductFindParams struct {
 
 type ProductRepository interface {
 	Get(id string) (entities.Product, error)
+	ShareLock(id string) (entities.Product, error)
 	Find(params *ProductFindParams) ([]entities.Product, error)
 	Create(room *entities.Product) error
 	Update(id string, updateFn func(room *entities.Product) error) (entities.Product, error)

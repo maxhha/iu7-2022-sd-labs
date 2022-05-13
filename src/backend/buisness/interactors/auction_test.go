@@ -27,13 +27,7 @@ func TestAuctionSuite(t *testing.T) {
 func (s *AuctionSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
-	s.interactor = NewAuctionInteractor(
-		s.roomRepo,
-		s.tableRepo,
-		s.productRepo,
-		s.auctionRepo,
-		s.eventBus,
-	)
+	s.interactor = NewAuctionInteractor(s.repo, s.eventBus)
 }
 
 func (s *AuctionSuite) TestCreate() {
@@ -65,7 +59,7 @@ func (s *AuctionSuite) TestCreate() {
 				RoomID: "unknown-room",
 			},
 			func(c *Case) {
-				s.roomRepo.On("Get", "unknown-room").
+				s.repo.RoomMock.On("Get", "unknown-room").
 					Return(entities.Room{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -79,11 +73,11 @@ func (s *AuctionSuite) TestCreate() {
 				BidStepTableID: "unknown-table",
 			},
 			func(c *Case) {
-				s.roomRepo.On("Get", room.ID()).
+				s.repo.RoomMock.On("Get", room.ID()).
 					Return(room, nil).
 					Once()
 
-				s.tableRepo.On("Get", "unknown-table").
+				s.repo.BidStepTableMock.On("Get", "unknown-table").
 					Return(entities.BidStepTable{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -98,27 +92,20 @@ func (s *AuctionSuite) TestCreate() {
 				ProductID:      expectedProduct.ID(),
 			},
 			func(c *Case) {
-				s.roomRepo.On("Get", room.ID()).
+				s.repo.RoomMock.On("Get", room.ID()).
 					Return(room, nil).
 					Once()
 
-				s.tableRepo.On("Get", table.ID()).
+				s.repo.BidStepTableMock.On("Get", table.ID()).
 					Return(table, nil).
 					Once()
 
-				s.auctionRepo.On("Create", mock.Anything).
-					Return(repositories.ErrNotFound).
+				s.repo.ProductMock.On("ShareLock", expectedProduct.ID()).
+					Return(expectedProduct, nil).
 					Once()
 
-				s.productRepo.On("Update", expectedProduct.ID(), mock.Anything).
-					Run(func(args mock.Arguments) {
-						updateFn := args.Get(1).(func(product *entities.Product) error)
-
-						product := expectedProduct
-						err := updateFn(&product)
-						require.ErrorIs(s.T(), err, repositories.ErrNotFound, c.Name)
-					}).
-					Return(expectedProduct, repositories.ErrNotFound).
+				s.repo.AuctionMock.On("Create", mock.Anything).
+					Return(repositories.ErrNotFound).
 					Once()
 			},
 			entities.Auction{},
@@ -134,31 +121,24 @@ func (s *AuctionSuite) TestCreate() {
 				MinAmount:      minAmount,
 			},
 			func(c *Case) {
-				s.roomRepo.On("Get", room.ID()).
+				s.repo.RoomMock.On("Get", room.ID()).
 					Return(room, nil).
 					Once()
 
-				s.tableRepo.On("Get", table.ID()).
+				s.repo.BidStepTableMock.On("Get", table.ID()).
 					Return(table, nil).
 					Once()
 
-				s.auctionRepo.On("Create", mock.Anything).
+				s.repo.ProductMock.On("ShareLock", expectedProduct.ID()).
+					Return(expectedProduct, nil).
+					Once()
+
+				s.repo.AuctionMock.On("Create", mock.Anything).
 					Run(func(args mock.Arguments) {
 						auction := args.Get(0).(*entities.Auction)
 						auction.SetID(id)
 					}).
 					Return(nil).
-					Once()
-
-				s.productRepo.On("Update", expectedProduct.ID(), mock.Anything).
-					Run(func(args mock.Arguments) {
-						updateFn := args.Get(1).(func(product *entities.Product) error)
-
-						product := expectedProduct
-						err := updateFn(&product)
-						require.NoError(s.T(), err, c.Name)
-					}).
-					Return(expectedProduct, nil).
 					Once()
 
 				s.eventBus.On("Notify", &bus.EvtAuctionCreated{
@@ -197,7 +177,7 @@ func (s *AuctionSuite) TestFind() {
 	}
 
 	params := repositories.AuctionFindParams{}
-	s.auctionRepo.On("Find", &params).Return(orgs, nil)
+	s.repo.AuctionMock.On("Find", &params).Return(orgs, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -218,7 +198,7 @@ func (s *AuctionSuite) TestCancel() {
 		{
 			"Case: fail delete",
 			func(c *Case) {
-				s.auctionRepo.On("Delete", id).
+				s.repo.AuctionMock.On("Delete", id).
 					Return(entities.Auction{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -229,7 +209,7 @@ func (s *AuctionSuite) TestCancel() {
 			func(c *Case) {
 				auction := entities.NewAuction()
 				auction.SetID(id)
-				s.auctionRepo.On("Delete", id).
+				s.repo.AuctionMock.On("Delete", id).
 					Return(auction, nil).
 					Once()
 

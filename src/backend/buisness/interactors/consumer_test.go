@@ -25,12 +25,7 @@ func TestConsumerSuite(t *testing.T) {
 func (s *ConsumerSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
-	s.interactor = NewConsumerInteractor(
-		s.consumerRepo,
-		s.roomRepo,
-		s.eventBus,
-		s.validatorService,
-	)
+	s.interactor = NewConsumerInteractor(s.repo, s.eventBus, s.validatorService)
 }
 
 func (s *ConsumerSuite) TestCreate() {
@@ -65,7 +60,7 @@ func (s *ConsumerSuite) TestCreate() {
 					Return(nil).
 					Once()
 
-				s.consumerRepo.On("Create", mock.Anything).
+				s.repo.ConsumerMock.On("Create", mock.Anything).
 					Return(func(consumer *entities.Consumer) error {
 						consumer.SetID(id)
 						return nil
@@ -101,7 +96,7 @@ func (s *ConsumerSuite) TestFind() {
 	}
 
 	params := repositories.ConsumerFindParams{}
-	s.consumerRepo.On("Find", &params).Return(tables, nil)
+	s.repo.ConsumerMock.On("Find", &params).Return(tables, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -134,7 +129,7 @@ func (s *ConsumerSuite) TestUpdate() {
 				ID: "unknown-consumer",
 			},
 			func(c *Case) {
-				s.consumerRepo.On("Get", "unknown-consumer").
+				s.repo.ConsumerMock.On("Get", "unknown-consumer").
 					Return(entities.Consumer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -148,7 +143,7 @@ func (s *ConsumerSuite) TestUpdate() {
 				Form: newForm,
 			},
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumer.ID()).
+				s.repo.ConsumerMock.On("Get", consumer.ID()).
 					Return(consumer, nil).
 					Once()
 
@@ -167,7 +162,7 @@ func (s *ConsumerSuite) TestUpdate() {
 				Form:     newForm,
 			},
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumer.ID()).
+				s.repo.ConsumerMock.On("Get", consumer.ID()).
 					Return(consumer, nil).
 					Once()
 
@@ -175,7 +170,7 @@ func (s *ConsumerSuite) TestUpdate() {
 					Return(nil).
 					Once()
 
-				s.consumerRepo.On("Update", mock.Anything).
+				s.repo.ConsumerMock.On("Update", mock.Anything).
 					Return(nil).
 					Once()
 			},
@@ -220,7 +215,7 @@ func (s *ConsumerSuite) TestEnterRoom() {
 		{
 			"Case: fail get consumer",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(entities.Consumer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -229,11 +224,11 @@ func (s *ConsumerSuite) TestEnterRoom() {
 		{
 			"Case: fail update room",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.roomRepo.On("Update", roomID, mock.Anything).
+				s.repo.RoomMock.On("Update", roomID, mock.Anything).
 					Return(entities.Room{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -242,11 +237,11 @@ func (s *ConsumerSuite) TestEnterRoom() {
 		{
 			"Case: success",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.roomRepo.On("Update", roomID, mock.Anything).
+				s.repo.RoomMock.On("Update", roomID, mock.Anything).
 					Return(
 						func(
 							_ string,
@@ -305,7 +300,7 @@ func (s *ConsumerSuite) TestExitRoom() {
 		{
 			"Case: fail get consumer",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(entities.Consumer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -314,11 +309,11 @@ func (s *ConsumerSuite) TestExitRoom() {
 		{
 			"Case: fail update room",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.roomRepo.On("Update", roomID, mock.Anything).
+				s.repo.RoomMock.On("Update", roomID, mock.Anything).
 					Return(entities.Room{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -327,11 +322,11 @@ func (s *ConsumerSuite) TestExitRoom() {
 		{
 			"Case: success",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.roomRepo.On("Update", roomID, mock.Anything).
+				s.repo.RoomMock.On("Update", roomID, mock.Anything).
 					Return(
 						func(
 							_ string,

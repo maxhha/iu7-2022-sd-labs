@@ -25,10 +25,7 @@ func TestBidStepTableSuite(t *testing.T) {
 func (s *BidStepTableSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
-	s.interactor = NewBidStepTableInteractor(
-		s.organizerRepo,
-		s.tableRepo,
-	)
+	s.interactor = NewBidStepTableInteractor(s.repo)
 }
 
 func (s *BidStepTableSuite) TestCreate() {
@@ -51,7 +48,7 @@ func (s *BidStepTableSuite) TestCreate() {
 				OrganizerID: "unknown-organizer",
 			},
 			func(c *Case) {
-				s.organizerRepo.On("Get", "unknown-organizer").
+				s.repo.OrganizerMock.On("Get", "unknown-organizer").
 					Return(entities.Organizer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -65,7 +62,7 @@ func (s *BidStepTableSuite) TestCreate() {
 				Name:        name,
 			},
 			func(c *Case) {
-				s.organizerRepo.On("Get", organizer.ID()).
+				s.repo.OrganizerMock.On("Get", organizer.ID()).
 					Return(organizer, nil).
 					Once()
 			},
@@ -83,11 +80,11 @@ func (s *BidStepTableSuite) TestCreate() {
 				}},
 			},
 			func(c *Case) {
-				s.organizerRepo.On("Get", organizer.ID()).
+				s.repo.OrganizerMock.On("Get", organizer.ID()).
 					Return(organizer, nil).
 					Once()
 
-				s.tableRepo.On("Create", mock.Anything).
+				s.repo.BidStepTableMock.On("Create", mock.Anything).
 					Run(func(args mock.Arguments) {
 						table := args.Get(0).(*entities.BidStepTable)
 						table.SetID(c.Result.ID())
@@ -129,7 +126,7 @@ func (s *BidStepTableSuite) TestFind() {
 	}
 
 	params := repositories.BidStepTableFindParams{}
-	s.tableRepo.On("Find", &params).Return(tables, nil)
+	s.repo.BidStepTableMock.On("Find", &params).Return(tables, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -160,7 +157,7 @@ func (s *BidStepTableSuite) TestUpdate() {
 				ID: "unknown-table",
 			},
 			func(c *Case) {
-				s.tableRepo.On("Get", "unknown-table").
+				s.repo.BidStepTableMock.On("Get", "unknown-table").
 					Return(entities.BidStepTable{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -174,7 +171,7 @@ func (s *BidStepTableSuite) TestUpdate() {
 				Name: newName,
 			},
 			func(c *Case) {
-				s.tableRepo.On("Get", table.ID()).
+				s.repo.BidStepTableMock.On("Get", table.ID()).
 					Return(table, nil).
 					Once()
 			},
@@ -192,11 +189,11 @@ func (s *BidStepTableSuite) TestUpdate() {
 				}},
 			},
 			func(c *Case) {
-				s.tableRepo.On("Get", table.ID()).
+				s.repo.BidStepTableMock.On("Get", table.ID()).
 					Return(table, nil).
 					Once()
 
-				s.tableRepo.On("Update", &c.Result).
+				s.repo.BidStepTableMock.On("Update", &c.Result).
 					Return(nil).
 					Once()
 			},

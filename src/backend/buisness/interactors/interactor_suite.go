@@ -9,27 +9,15 @@ import (
 
 type InteractorSuite struct {
 	suite.Suite
-	roomRepo         *mocks.RoomRepository
-	organizerRepo    *mocks.OrganizerRepository
-	offerRepo        *mocks.OfferRepository
-	tableRepo        *mocks.BidStepTableRepository
-	productRepo      *mocks.ProductRepository
-	auctionRepo      *mocks.AuctionRepository
-	consumerRepo     *mocks.ConsumerRepository
+	repo             *mocks.Repository
 	validatorService *mocks.ConsumerFormValidatorService
 	payService       *mocks.OfferPayService
 	eventBus         *mocks.EventBus
 }
 
 func (s *InteractorSuite) SetupTest() {
-	s.roomRepo = mocks.NewRoomRepository(s.T())
-	s.organizerRepo = mocks.NewOrganizerRepository(s.T())
-	s.offerRepo = mocks.NewOfferRepository(s.T())
-	s.tableRepo = mocks.NewBidStepTableRepository(s.T())
-	s.productRepo = mocks.NewProductRepository(s.T())
-	s.auctionRepo = mocks.NewAuctionRepository(s.T())
+	s.repo = mocks.NewRepository(s.T())
 	s.eventBus = mocks.NewEventBus(s.T())
-	s.consumerRepo = mocks.NewConsumerRepository(s.T())
 	s.validatorService = mocks.NewConsumerFormValidatorService(s.T())
 	s.payService = mocks.NewOfferPayService(s.T())
 }

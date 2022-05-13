@@ -27,10 +27,7 @@ func (s *OfferSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
 	s.interactor = NewOfferInteractor(
-		s.consumerRepo,
-		s.tableRepo,
-		s.offerRepo,
-		s.auctionRepo,
+		s.repo,
 		s.eventBus,
 		s.payService,
 	)
@@ -65,41 +62,11 @@ func (s *OfferSuite) TestCreate() {
 		Error  string
 	}
 
-	updateAuctionAndReturnError := func(auction entities.Auction, c *Case) func(
-		string,
-		func(*entities.Auction) error,
-	) error {
-		return func(
-			_ string,
-			updateFn func(*entities.Auction) error,
-		) error {
-			obj := auction
-			err := updateFn(&obj)
-			require.Error(s.T(), err, c.Name)
-			return err
-		}
-	}
-
-	updateAndReturnAuction := func(auction entities.Auction, c *Case) func(
-		string,
-		func(*entities.Auction) error,
-	) entities.Auction {
-		return func(
-			_ string,
-			updateFn func(*entities.Auction) error,
-		) entities.Auction {
-			obj := auction
-			err := updateFn(&obj)
-			require.NoError(s.T(), err, c.Name)
-			return obj
-		}
-	}
-
 	cases := []Case{
 		{
 			"Case: fail get consumer",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, repositories.ErrNotFound).
 					Once()
 			},
@@ -109,30 +76,29 @@ func (s *OfferSuite) TestCreate() {
 		{
 			"Case: fail update auction",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.auctionRepo.On("Update", auctionID, mock.Anything).
+				s.repo.AuctionMock.On("Lock", auctionID).
 					Return(auction, repositories.ErrNotFound).
 					Once()
 			},
 			*s.NewOfferPtr(),
-			"auction repo update: not found",
+			"auction repo lock: not found",
 		},
 		{
 			"Case: fail get table",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.auctionRepo.On("Update", auctionID, mock.Anything).Return(
-					entities.Auction{},
-					updateAuctionAndReturnError(auction, c),
-				).Once()
+				s.repo.AuctionMock.On("Lock", auctionID).
+					Return(auction, nil).
+					Once()
 
-				s.tableRepo.On("Get", tableID).Return(
+				s.repo.BidStepTableMock.On("Get", tableID).Return(
 					entities.BidStepTable{},
 					repositories.ErrNotFound,
 				).Once()
@@ -143,18 +109,19 @@ func (s *OfferSuite) TestCreate() {
 		{
 			"Case: fail get max offer",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.auctionRepo.On("Update", auctionID, mock.Anything).Return(
-					entities.Auction{},
-					updateAuctionAndReturnError(auction, c),
-				).Once()
+				s.repo.AuctionMock.On("Lock", auctionID).
+					Return(auction, nil).
+					Once()
 
-				s.tableRepo.On("Get", tableID).Return(table, nil).Once()
+				s.repo.BidStepTableMock.On("Get", tableID).
+					Return(table, nil).
+					Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -164,18 +131,17 @@ func (s *OfferSuite) TestCreate() {
 		{
 			"Case: amount is less then auction min bid",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.auctionRepo.On("Update", auctionID, mock.Anything).Return(
-					entities.Auction{},
-					updateAuctionAndReturnError(auctionWithMinAmount, c),
-				).Once()
+				s.repo.AuctionMock.On("Lock", auctionID).
+					Return(auctionWithMinAmount, nil).
+					Once()
 
-				s.tableRepo.On("Get", tableID).Return(table, nil).Once()
+				s.repo.BidStepTableMock.On("Get", tableID).Return(table, nil).Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{}, nil).
 					Once()
 			},
@@ -185,18 +151,17 @@ func (s *OfferSuite) TestCreate() {
 		{
 			"Case: offered amount is not allowed by bid step table",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.auctionRepo.On("Update", auctionID, mock.Anything).Return(
-					entities.Auction{},
-					updateAuctionAndReturnError(auctionWithMinAmount, c),
-				).Once()
+				s.repo.AuctionMock.On("Lock", auctionID).
+					Return(auction, nil).
+					Once()
 
-				s.tableRepo.On("Get", tableID).Return(table, nil).Once()
+				s.repo.BidStepTableMock.On("Get", tableID).Return(table, nil).Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{greaterMaxOffer}, nil).
 					Once()
 			},
@@ -206,22 +171,21 @@ func (s *OfferSuite) TestCreate() {
 		{
 			"Case: success",
 			func(c *Case) {
-				s.consumerRepo.On("Get", consumerID).
+				s.repo.ConsumerMock.On("Get", consumerID).
 					Return(consumer, nil).
 					Once()
 
-				s.auctionRepo.On("Update", auctionID, mock.Anything).Return(
-					updateAndReturnAuction(auction, c),
-					nil,
-				).Once()
+				s.repo.AuctionMock.On("Lock", auctionID).
+					Return(auction, nil).
+					Once()
 
-				s.tableRepo.On("Get", tableID).Return(table, nil).Once()
+				s.repo.BidStepTableMock.On("Get", tableID).Return(table, nil).Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{}, nil).
 					Once()
 
-				s.offerRepo.On("Create", mock.Anything).
+				s.repo.OfferMock.On("Create", mock.Anything).
 					Return(func(offer *entities.Offer) error {
 						offer.SetID(offerID)
 						return nil
@@ -262,7 +226,7 @@ func (s *OfferSuite) TestFind() {
 	}
 
 	params := repositories.OfferFindParams{}
-	s.offerRepo.On("Find", &params).Return(offers, nil)
+	s.repo.OfferMock.On("Find", &params).Return(offers, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -291,7 +255,7 @@ func (s *OfferSuite) TestPay() {
 		{
 			"Case: fail get offer",
 			func(c *Case) {
-				s.offerRepo.On("Get", offerID).
+				s.repo.OfferMock.On("Get", offerID).
 					Return(entities.Offer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -301,11 +265,11 @@ func (s *OfferSuite) TestPay() {
 		{
 			"Case: fail find max offer",
 			func(c *Case) {
-				s.offerRepo.On("Get", offerID).
+				s.repo.OfferMock.On("Get", offerID).
 					Return(offer, nil).
 					Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -315,11 +279,11 @@ func (s *OfferSuite) TestPay() {
 		{
 			"Case: pay not max offer",
 			func(c *Case) {
-				s.offerRepo.On("Get", offerID).
+				s.repo.OfferMock.On("Get", offerID).
 					Return(offer, nil).
 					Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{greaterMaxOffer}, nil).
 					Once()
 			},
@@ -329,11 +293,11 @@ func (s *OfferSuite) TestPay() {
 		{
 			"Case: success",
 			func(c *Case) {
-				s.offerRepo.On("Get", offerID).
+				s.repo.OfferMock.On("Get", offerID).
 					Return(offer, nil).
 					Once()
 
-				s.offerRepo.On("Find", mock.Anything).
+				s.repo.OfferMock.On("Find", mock.Anything).
 					Return([]entities.Offer{offer}, nil).
 					Once()
 
