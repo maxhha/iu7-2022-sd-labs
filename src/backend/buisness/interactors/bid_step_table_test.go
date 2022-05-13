@@ -52,22 +52,8 @@ func (s *BidStepTableSuite) TestCreate() {
 					Return(entities.Organizer{}, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewBidStepTablePtr(),
+			*entities.NewBidStepTablePtr(),
 			repositories.ErrNotFound,
-		},
-		{
-			"Case: invalid table",
-			interactors.BidStepTableCreateParams{
-				OrganizerID: organizer.ID(),
-				Name:        name,
-			},
-			func(c *Case) {
-				s.repo.OrganizerMock.On("Get", organizer.ID()).
-					Return(organizer, nil).
-					Once()
-			},
-			*s.NewBidStepTablePtr(),
-			entities.ErrIsEmpty,
 		},
 		{
 			"Case: success",
@@ -92,12 +78,12 @@ func (s *BidStepTableSuite) TestCreate() {
 					Return(nil).
 					Once()
 			},
-			*s.NewBidStepTablePtr().
+			*entities.NewBidStepTablePtr().
 				SetID("test-table").
 				SetOrganizerID(organizer.ID()).
 				SetName(name).
 				SetRows([]entities.BidStepRow{
-					*s.NewBidStepRowPtr().
+					*entities.NewBidStepRowPtr().
 						SetFromAmount(decimal.Zero).
 						SetStep(decimal.NewFromInt(1)),
 				}),
@@ -150,65 +136,52 @@ func (s *BidStepTableSuite) TestUpdate() {
 		Error  error
 	}
 
-	cases := []Case{
-		{
-			"Case: fail get table",
-			interactors.BidStepTableUpdateParams{
-				ID: "unknown-table",
-			},
-			func(c *Case) {
-				s.repo.BidStepTableMock.On("Get", "unknown-table").
-					Return(entities.BidStepTable{}, repositories.ErrNotFound).
-					Once()
-			},
-			*s.NewBidStepTablePtr(),
-			repositories.ErrNotFound,
-		},
-		{
-			"Case: invalid table",
-			interactors.BidStepTableUpdateParams{
-				ID:   table.ID(),
-				Name: newName,
-			},
-			func(c *Case) {
-				s.repo.BidStepTableMock.On("Get", table.ID()).
-					Return(table, nil).
-					Once()
-			},
-			*s.NewBidStepTablePtr(),
-			entities.ErrIsEmpty,
-		},
-		{
-			"Case: success",
-			interactors.BidStepTableUpdateParams{
-				ID:   table.ID(),
-				Name: newName,
-				Rows: []interactors.BidStepRow{{
-					FromAmount: decimal.Zero,
-					Step:       decimal.NewFromInt(1),
-				}},
-			},
-			func(c *Case) {
-				s.repo.BidStepTableMock.On("Get", table.ID()).
-					Return(table, nil).
-					Once()
-
-				s.repo.BidStepTableMock.On("Update", &c.Result).
-					Return(nil).
-					Once()
-			},
-			*s.NewBidStepTablePtr().
-				SetID(table.ID()).
-				SetOrganizerID(table.OrganizerID()).
-				SetName(newName).
-				SetRows([]entities.BidStepRow{
-					*s.NewBidStepRowPtr().
-						SetFromAmount(decimal.Zero).
-						SetStep(decimal.NewFromInt(1)),
-				}),
-			nil,
-		},
+	updateTableAndReturnTable := func(c *Case, table entities.BidStepTable) func(id string, updateFn func(*entities.BidStepTable) error) entities.BidStepTable {
+		return func(_ string, updateFn func(*entities.BidStepTable) error) entities.BidStepTable {
+			err := updateFn(&table)
+			require.NoError(s.T(), err, c.Name)
+			return table
+		}
 	}
+
+	cases := []Case{{
+		"Case: fail get table",
+		interactors.BidStepTableUpdateParams{
+			ID: "unknown-table",
+		},
+		func(c *Case) {
+			s.repo.BidStepTableMock.On("Update", "unknown-table", mock.Anything).
+				Return(entities.BidStepTable{}, repositories.ErrNotFound).
+				Once()
+		},
+		*entities.NewBidStepTablePtr(),
+		repositories.ErrNotFound,
+	}, {
+		"Case: success",
+		interactors.BidStepTableUpdateParams{
+			ID:   table.ID(),
+			Name: newName,
+			Rows: []interactors.BidStepRow{{
+				FromAmount: decimal.Zero,
+				Step:       decimal.NewFromInt(1),
+			}},
+		},
+		func(c *Case) {
+			s.repo.BidStepTableMock.On("Update", table.ID(), mock.Anything).
+				Return(updateTableAndReturnTable(c, table), nil).
+				Once()
+		},
+		*entities.NewBidStepTablePtr().
+			SetID(table.ID()).
+			SetOrganizerID(table.OrganizerID()).
+			SetName(newName).
+			SetRows([]entities.BidStepRow{
+				*entities.NewBidStepRowPtr().
+					SetFromAmount(decimal.Zero).
+					SetStep(decimal.NewFromInt(1)),
+			}),
+		nil,
+	}}
 
 	for _, c := range cases {
 		c.Mock(&c)

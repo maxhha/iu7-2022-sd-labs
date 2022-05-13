@@ -49,7 +49,7 @@ func (s *ProductSuite) TestCreate() {
 					Return(entities.Organizer{}, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewProductPtr(),
+			*entities.NewProductPtr(),
 			repositories.ErrNotFound,
 		},
 		{
@@ -62,7 +62,7 @@ func (s *ProductSuite) TestCreate() {
 					Return(org, nil).
 					Once()
 
-				expectedProduct := s.
+				expectedProduct := entities.
 					NewProductPtr().
 					SetOrganizerID(organizerID).
 					SetName(name)
@@ -77,7 +77,7 @@ func (s *ProductSuite) TestCreate() {
 					Return(nil).
 					Once()
 			},
-			*s.NewProductPtr().
+			*entities.NewProductPtr().
 				SetOrganizerID(organizerID).
 				SetName(name).
 				SetID(productID),
@@ -116,7 +116,7 @@ func (s *ProductSuite) TestFind() {
 func (s *ProductSuite) TestUpdate() {
 	id := "test-product"
 	name := "product-name"
-	expectedProduct := *s.NewProductPtr().SetID(id).SetName(name)
+	expectedProduct := *entities.NewProductPtr().SetID(id).SetName(name)
 
 	s.repo.ProductMock.
 		On("Update", id, mock.Anything).

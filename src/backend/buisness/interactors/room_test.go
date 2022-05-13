@@ -29,7 +29,7 @@ func (s *RoomSuite) SetupTest() {
 func (s *RoomSuite) TestCreate() {
 	roomID := "test-room"
 	organizerID := "test-organizer"
-	organizer := *s.NewOrganizerPtr().SetID(organizerID)
+	organizer := *entities.NewOrganizerPtr().SetID(organizerID)
 	name := "test-name"
 	address := "test-address"
 
@@ -63,7 +63,7 @@ func (s *RoomSuite) TestCreate() {
 				}).
 				Once()
 		},
-		*s.NewRoomPtr().
+		*entities.NewRoomPtr().
 			SetID(roomID).
 			SetOrganizerID(organizerID).
 			SetName(name).

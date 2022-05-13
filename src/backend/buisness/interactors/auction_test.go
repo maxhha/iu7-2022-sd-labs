@@ -145,7 +145,7 @@ func (s *AuctionSuite) TestCreate() {
 					Auction: c.Result,
 				}).Once()
 			},
-			*s.NewAuctionPtr().
+			*entities.NewAuctionPtr().
 				SetID(id).
 				SetStartedAt(startedAt).
 				SetMinAmount(minAmount).

@@ -92,7 +92,7 @@ func (s *OrganizerSuite) TestUpdate() {
 				s.repo.OrganizerMock.On("Update", &org).
 					Return(nil)
 			},
-			*s.NewOrganizerPtr().SetID(id).SetName(newName),
+			*entities.NewOrganizerPtr().SetID(id).SetName(newName),
 			nil,
 		},
 	}

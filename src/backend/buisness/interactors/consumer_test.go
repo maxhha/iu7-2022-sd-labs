@@ -50,7 +50,7 @@ func (s *ConsumerSuite) TestCreate() {
 					Return(entities.ErrIsEmpty).
 					Once()
 			},
-			*s.NewConsumerPtr(),
+			*entities.NewConsumerPtr(),
 			entities.ErrIsEmpty,
 		},
 		{
@@ -67,7 +67,7 @@ func (s *ConsumerSuite) TestCreate() {
 					}).
 					Once()
 			},
-			*s.NewConsumerPtr().
+			*entities.NewConsumerPtr().
 				SetID(id).
 				SetNickname(nickname).
 				SetForm(form),
@@ -133,7 +133,7 @@ func (s *ConsumerSuite) TestUpdate() {
 					Return(entities.Consumer{}, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewConsumerPtr(),
+			*entities.NewConsumerPtr(),
 			repositories.ErrNotFound,
 		},
 		{
@@ -151,7 +151,7 @@ func (s *ConsumerSuite) TestUpdate() {
 					Return(entities.ErrIsEmpty).
 					Once()
 			},
-			*s.NewConsumerPtr(),
+			*entities.NewConsumerPtr(),
 			entities.ErrIsEmpty,
 		},
 		{
@@ -174,7 +174,7 @@ func (s *ConsumerSuite) TestUpdate() {
 					Return(nil).
 					Once()
 			},
-			*s.NewConsumerPtr().
+			*entities.NewConsumerPtr().
 				SetID(consumer.ID()).
 				SetNickname(newNickname).
 				SetForm(newForm),
@@ -258,7 +258,7 @@ func (s *ConsumerSuite) TestEnterRoom() {
 
 				s.eventBus.On("Notify", &bus.EvtConsumerEnteredRoom{
 					Consumer: consumer,
-					Room: *s.NewRoomPtr().
+					Room: *entities.NewRoomPtr().
 						SetID(roomID).
 						SetConsumerIDs([]string{consumerID}),
 				}).Once()
@@ -343,7 +343,7 @@ func (s *ConsumerSuite) TestExitRoom() {
 
 				s.eventBus.On("Notify", &bus.EvtConsumerExitedRoom{
 					Consumer: consumer,
-					Room:     *s.NewRoomPtr().SetID(roomID),
+					Room:     *entities.NewRoomPtr().SetID(roomID),
 				}).Once()
 			},
 			nil,

@@ -45,10 +45,6 @@ func (interactor *BidStepTableInteractor) Create(
 		SetName(params.Name).
 		SetRows(rows)
 
-	if err = table.Validate(); err != nil {
-		return table, errors.Wrap(err, "validate")
-	}
-
 	err = interactor.repo.BidStepTable().Create(&table)
 	return table, errors.Wrap(err, "table repo create")
 }
@@ -63,21 +59,15 @@ func (interactor *BidStepTableInteractor) Find(
 func (interactor *BidStepTableInteractor) Update(
 	params *interactors.BidStepTableUpdateParams,
 ) (entities.BidStepTable, error) {
-	table, err := interactor.repo.BidStepTable().Get(params.ID)
-	if err != nil {
-		return table, errors.Wrap(err, "table repo get")
-	}
-
 	rows := interactor.bidStepRowsToEntities(params.Rows)
-	table.
-		SetName(params.Name).
-		SetRows(rows)
 
-	if err = table.Validate(); err != nil {
-		return table, errors.Wrap(err, "validate")
-	}
+	table, err := interactor.repo.BidStepTable().Update(params.ID, func(table *entities.BidStepTable) error {
+		table.
+			SetName(params.Name).
+			SetRows(rows)
 
-	err = interactor.repo.BidStepTable().Update(&table)
+		return nil
+	})
 
 	return table, errors.Wrap(err, "table repo update")
 }

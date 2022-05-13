@@ -29,6 +29,6 @@ type BidStepTableFindParams struct {
 type BidStepTableRepository interface {
 	Get(id string) (entities.BidStepTable, error)
 	Find(params *BidStepTableFindParams) ([]entities.BidStepTable, error)
-	Create(organizer *entities.BidStepTable) error
-	Update(organizer *entities.BidStepTable) error
+	Create(table *entities.BidStepTable) error
+	Update(id string, updateFn func(table *entities.BidStepTable) error) (entities.BidStepTable, error)
 }

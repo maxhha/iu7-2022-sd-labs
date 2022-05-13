@@ -17,13 +17,13 @@ type BidStepTableRepository struct {
 	mock.Mock
 }
 
-// Create provides a mock function with given fields: organizer
-func (_m *BidStepTableRepository) Create(organizer *entities.BidStepTable) error {
-	ret := _m.Called(organizer)
+// Create provides a mock function with given fields: table
+func (_m *BidStepTableRepository) Create(table *entities.BidStepTable) error {
+	ret := _m.Called(table)
 
 	var r0 error
 	if rf, ok := ret.Get(0).(func(*entities.BidStepTable) error); ok {
-		r0 = rf(organizer)
+		r0 = rf(table)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -75,18 +75,25 @@ func (_m *BidStepTableRepository) Get(id string) (entities.BidStepTable, error) 
 	return r0, r1
 }
 
-// Update provides a mock function with given fields: organizer
-func (_m *BidStepTableRepository) Update(organizer *entities.BidStepTable) error {
-	ret := _m.Called(organizer)
+// Update provides a mock function with given fields: id, updateFn
+func (_m *BidStepTableRepository) Update(id string, updateFn func(*entities.BidStepTable) error) (entities.BidStepTable, error) {
+	ret := _m.Called(id, updateFn)
 
-	var r0 error
-	if rf, ok := ret.Get(0).(func(*entities.BidStepTable) error); ok {
-		r0 = rf(organizer)
+	var r0 entities.BidStepTable
+	if rf, ok := ret.Get(0).(func(string, func(*entities.BidStepTable) error) entities.BidStepTable); ok {
+		r0 = rf(id, updateFn)
 	} else {
-		r0 = ret.Error(0)
+		r0 = ret.Get(0).(entities.BidStepTable)
 	}
 
-	return r0
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string, func(*entities.BidStepTable) error) error); ok {
+		r1 = rf(id, updateFn)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // NewBidStepTableRepository creates a new instance of BidStepTableRepository. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.

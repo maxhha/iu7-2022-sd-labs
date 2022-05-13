@@ -20,6 +20,11 @@ func NewAuction() Auction {
 	return Auction{}
 }
 
+func NewAuctionPtr() *Auction {
+	obj := NewAuction()
+	return &obj
+}
+
 func (obj *Auction) ID() string {
 	return obj.id
 }
@@ -61,7 +66,11 @@ func (obj *Auction) MinAmount() decimal.Decimal {
 }
 
 func (obj *Auction) SetMinAmount(minAmount decimal.Decimal) *Auction {
-	obj.minAmount = minAmount
+	if minAmount.IsZero() {
+		obj.minAmount = decimal.Decimal{}
+	} else {
+		obj.minAmount = minAmount
+	}
 	return obj
 }
 

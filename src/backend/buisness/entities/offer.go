@@ -18,6 +18,11 @@ func NewOffer() Offer {
 	return Offer{}
 }
 
+func NewOfferPtr() *Offer {
+	obj := NewOffer()
+	return &obj
+}
+
 func (obj *Offer) ID() string {
 	return obj.id
 }

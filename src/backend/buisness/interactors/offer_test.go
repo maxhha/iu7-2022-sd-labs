@@ -36,18 +36,18 @@ func (s *OfferSuite) SetupTest() {
 func (s *OfferSuite) TestCreate() {
 	offerID := "test-offer"
 	consumerID := "test-consumer"
-	consumer := *s.NewConsumerPtr().SetID(consumerID)
+	consumer := *entities.NewConsumerPtr().SetID(consumerID)
 	tableID := "test-table"
-	table := *s.NewBidStepTablePtr().SetID(tableID)
+	table := *entities.NewBidStepTablePtr().SetID(tableID)
 	auctionID := "test-auction"
-	auction := *s.NewAuctionPtr().
+	auction := *entities.NewAuctionPtr().
 		SetID(auctionID).
 		SetBidStepTableID(tableID)
 
 	auctionWithMinAmount := auction
 	auctionWithMinAmount.SetMinAmount(decimal.NewFromInt(20))
 
-	greaterMaxOffer := *s.NewOfferPtr().SetAmount(decimal.NewFromInt(20))
+	greaterMaxOffer := *entities.NewOfferPtr().SetAmount(decimal.NewFromInt(20))
 
 	params := interactors.OfferCreateParams{
 		ConsumerID: consumerID,
@@ -70,7 +70,7 @@ func (s *OfferSuite) TestCreate() {
 					Return(consumer, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewOfferPtr(),
+			*entities.NewOfferPtr(),
 			"consumer repo get: not found",
 		},
 		{
@@ -84,7 +84,7 @@ func (s *OfferSuite) TestCreate() {
 					Return(auction, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewOfferPtr(),
+			*entities.NewOfferPtr(),
 			"auction repo lock: not found",
 		},
 		{
@@ -103,7 +103,7 @@ func (s *OfferSuite) TestCreate() {
 					repositories.ErrNotFound,
 				).Once()
 			},
-			*s.NewOfferPtr(),
+			*entities.NewOfferPtr(),
 			"table repo get: not found",
 		},
 		{
@@ -125,7 +125,7 @@ func (s *OfferSuite) TestCreate() {
 					Return([]entities.Offer{}, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewOfferPtr(),
+			*entities.NewOfferPtr(),
 			"offer repo find max offer: not found",
 		},
 		{
@@ -145,7 +145,7 @@ func (s *OfferSuite) TestCreate() {
 					Return([]entities.Offer{}, nil).
 					Once()
 			},
-			*s.NewOfferPtr(),
+			*entities.NewOfferPtr(),
 			"offered amount is less than min amount",
 		},
 		{
@@ -165,7 +165,7 @@ func (s *OfferSuite) TestCreate() {
 					Return([]entities.Offer{greaterMaxOffer}, nil).
 					Once()
 			},
-			*s.NewOfferPtr(),
+			*entities.NewOfferPtr(),
 			"table is not allowed bid:",
 		},
 		{
@@ -196,7 +196,7 @@ func (s *OfferSuite) TestCreate() {
 					Offer: c.Result,
 				}).Once()
 			},
-			*s.NewOfferPtr().
+			*entities.NewOfferPtr().
 				SetID(offerID).
 				SetConsumerID(consumerID).
 				SetAuctionID(auctionID).
@@ -236,9 +236,9 @@ func (s *OfferSuite) TestFind() {
 func (s *OfferSuite) TestPay() {
 	auctionID := "test-auction"
 	offerID := "test-offer"
-	offer := *s.NewOfferPtr().SetID(offerID).SetAuctionID(auctionID)
+	offer := *entities.NewOfferPtr().SetID(offerID).SetAuctionID(auctionID)
 
-	greaterMaxOffer := *s.NewOfferPtr().
+	greaterMaxOffer := *entities.NewOfferPtr().
 		SetID("other-offer").
 		SetAmount(decimal.NewFromInt(20))
 

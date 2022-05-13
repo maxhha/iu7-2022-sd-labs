@@ -25,6 +25,11 @@ func NewBidStepTable() BidStepTable {
 	return BidStepTable{}
 }
 
+func NewBidStepTablePtr() *BidStepTable {
+	obj := NewBidStepTable()
+	return &obj
+}
+
 func (obj *BidStepTable) ID() string {
 	return obj.id
 }
@@ -58,6 +63,11 @@ func (obj *BidStepTable) Rows() []BidStepRow {
 
 func (obj *BidStepTable) SetRows(rows []BidStepRow) *BidStepTable {
 	obj.rows = rows
+
+	sort.SliceStable(obj.rows, func(i, j int) bool {
+		return obj.rows[i].fromAmount.LessThan(obj.rows[j].fromAmount)
+	})
+
 	return obj
 }
 
@@ -75,10 +85,6 @@ func (obj *BidStepTable) Validate() error {
 	if len(obj.rows) == 0 {
 		errs = multierror.Append(errs, errors.Wrap(ErrIsEmpty, "rows"))
 	} else {
-		sort.SliceStable(obj.rows, func(i, j int) bool {
-			return obj.rows[i].fromAmount.LessThan(obj.rows[j].fromAmount)
-		})
-
 		prev := obj.rows[0]
 		if !prev.fromAmount.Equal(decimal.Zero) {
 			errs = multierror.Append(errs, ErrMustStartFromZeroAmount)
@@ -155,8 +161,12 @@ func (obj *BidStepRow) FromAmount() decimal.Decimal {
 	return obj.fromAmount
 }
 
-func (obj *BidStepRow) SetFromAmount(minAmount decimal.Decimal) *BidStepRow {
-	obj.fromAmount = minAmount
+func (obj *BidStepRow) SetFromAmount(fromAmount decimal.Decimal) *BidStepRow {
+	if fromAmount.IsZero() {
+		obj.fromAmount = decimal.Decimal{}
+	} else {
+		obj.fromAmount = fromAmount
+	}
 	return obj
 }
 
@@ -165,6 +175,10 @@ func (obj *BidStepRow) Step() decimal.Decimal {
 }
 
 func (obj *BidStepRow) SetStep(step decimal.Decimal) *BidStepRow {
-	obj.step = step
+	if step.IsZero() {
+		obj.step = decimal.Decimal{}
+	} else {
+		obj.step = step
+	}
 	return obj
 }
