@@ -11,8 +11,9 @@ const (
 )
 
 type ProductFilter struct {
-	IDs       []string
-	NameQuery string
+	IDs          []string
+	OrganizerIDs []string
+	NameQuery    string
 }
 
 type ProductOrder struct {

@@ -55,7 +55,11 @@ func (obj *Offer) Amount() decimal.Decimal {
 }
 
 func (obj *Offer) SetAmount(amount decimal.Decimal) *Offer {
-	obj.amount = amount
+	if amount.IsZero() {
+		obj.amount = decimal.Decimal{}
+	} else {
+		obj.amount = amount
+	}
 	return obj
 }
 

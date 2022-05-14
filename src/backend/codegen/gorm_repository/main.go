@@ -68,6 +68,25 @@ func (r *{{ .Entity }}Repository) Lock(id string) (entities.{{ .Entity }}, error
 	return ent, nil
 }
 `)),
+	"ShareLock": template.Must(template.New("lockTemplate").Parse(`
+func (r *{{ .Entity }}Repository) ShareLock(id string) (entities.{{ .Entity }}, error) {
+	obj := {{ .Entity }}{}
+	ent := entities.New{{ .Entity }}()
+
+	err := r.db.Clauses(clause.Locking{
+		Strength: "SHARE",
+		Table:    clause.Table{Name: clause.CurrentTable},
+	}).
+		Take(&obj, "id = ?", id).
+		Error
+	if err != nil {
+		return ent, Wrap(err, "db select for update")
+	}
+
+	obj.Into(&ent)
+	return ent, nil
+}
+`)),
 	"Find": template.Must(template.New("findTemplate").Parse(`
 func (r *{{ .Entity }}Repository) Find(params *repositories.{{ .Entity }}FindParams) ([]entities.{{ .Entity }}, error) {
 	query := r.db.Model(&{{ .Entity }}{})
@@ -218,14 +237,29 @@ func (r *{{ .Entity }}Repository) Update(id string, updateFn func(ent *entities.
 	return ent, nil
 }
 `)),
+	"Update": template.Must(template.New("updateTemplate").Parse(`
+func (r *{{ .Entity }}Repository) Update(ent *entities.{{ .Entity }}) error {
+	obj := {{ .Entity }}{}
+	obj.From(ent)
+
+	if err := r.db.Save(&obj).Error; err != nil {
+		return Wrap(err, "db save")
+	}
+
+	obj.Into(ent)
+	return nil
+}
+`)),
 }
 
 var methodToImports = map[string][]string{
 	"Get":              {"iu7-2022-sd-labs/buisness/entities"},
 	"Lock":             {"iu7-2022-sd-labs/buisness/entities", "gorm.io/gorm/clause"},
+	"ShareLock":        {"iu7-2022-sd-labs/buisness/entities", "gorm.io/gorm/clause"},
 	"Find":             {"iu7-2022-sd-labs/buisness/entities"},
 	"Create":           {"iu7-2022-sd-labs/buisness/entities"},
 	"Update(updateFn)": {"iu7-2022-sd-labs/buisness/entities", "gorm.io/gorm/clause"},
+	"Update":           {"iu7-2022-sd-labs/buisness/entities"},
 	"Delete":           {"iu7-2022-sd-labs/buisness/entities", "gorm.io/gorm/clause"},
 	"orderQuery":       {"fmt", "gorm.io/gorm/clause"},
 	"sliceQuery":       {"fmt", "gorm.io/gorm/clause"},

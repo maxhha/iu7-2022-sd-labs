@@ -11,9 +11,11 @@ const (
 )
 
 type RoomFilter struct {
-	IDs          []string
-	NameQuery    string
-	AddressQuery string
+	IDs                []string
+	OrganizerIDs       []string
+	ConsumerEnteredIDs []string
+	NameQuery          string
+	AddressQuery       string
 }
 
 type RoomOrder struct {
