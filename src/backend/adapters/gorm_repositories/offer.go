@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/shopspring/decimal"
-	"gorm.io/datatypes"
 	"gorm.io/gorm"
 )
 
@@ -22,7 +21,6 @@ type Offer struct {
 	ConsumerID string
 	AuctionID  string
 	Amount     decimal.Decimal
-	Form       datatypes.JSONMap
 	CreatedAt  time.Time `gorm:"<-:create"`
 	DeletedAt  gorm.DeletedAt
 }
