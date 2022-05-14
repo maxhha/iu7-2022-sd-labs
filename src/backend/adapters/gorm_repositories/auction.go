@@ -17,14 +17,14 @@ var auctionFieldToColumn = map[repositories.AuctionOrderField]string{
 }
 
 type Auction struct {
-	ID             string `gorm:"default:generated()"`
+	ID             string `gorm:"<-:false;default:generated()"`
 	RoomID         string
 	ProductID      string
 	BidStepTableID string
 	MinAmount      decimal.Decimal
 	StartedAt      time.Time
 	FinishedAt     sql.NullTime
-	CreatedAt      time.Time
+	CreatedAt      time.Time `gorm:"<-:create"`
 	UpdatedAt      time.Time
 	DeletedAt      gorm.DeletedAt
 }

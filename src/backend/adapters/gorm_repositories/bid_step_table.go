@@ -18,17 +18,17 @@ var bidStepTableFieldToColumn = map[repositories.BidStepTableOrderField]string{
 }
 
 type BidStepTable struct {
-	ID          string `gorm:"default:generated()"`
+	ID          string `gorm:"<-:false;default:generated()"`
 	Name        string
 	OrganizerID string
-	CreatedAt   time.Time
+	CreatedAt   time.Time `gorm:"<-:create"`
 	UpdatedAt   time.Time
 	DeletedAt   gorm.DeletedAt
 }
 
 type BidStepRow struct {
-	TableID    string          `gorm:"primaryKey"`
-	FromAmount decimal.Decimal `gorm:"primaryKey"`
+	TableID    string          `gorm:"<-:create;primaryKey"`
+	FromAmount decimal.Decimal `gorm:"<-:create;primaryKey"`
 	Step       decimal.Decimal
 }
 
@@ -284,37 +284,31 @@ func (r *BidStepTableRepository) Update(id string, updateFn func(ent *entities.B
 			}
 		}
 
+		objs := make([]BidStepRow, 0, len(objRowsDeleted))
 		for _, obj := range objRowsDeleted {
-			if err = tx.Delete(&obj).Error; err != nil {
-				return Wrapf(
-					err,
-					`tx delete table_id="%s" from_amount="%s"`,
-					obj.TableID,
-					obj.FromAmount.StringFixed(2),
-				)
-			}
+			objs = append(objs, obj)
 		}
 
+		if err = tx.Delete(&objs).Error; err != nil {
+			return Wrap(err, `tx delete rows`)
+		}
+
+		objs = make([]BidStepRow, 0, len(objRowsCreated))
 		for _, obj := range objRowsCreated {
-			if err = tx.Create(&obj).Error; err != nil {
-				return Wrapf(
-					err,
-					`tx create table_id="%s" from_amount="%s"`,
-					obj.TableID,
-					obj.FromAmount.StringFixed(2),
-				)
-			}
+			objs = append(objs, obj)
 		}
 
+		if err = tx.Create(&objs).Error; err != nil {
+			return Wrap(err, `tx create rows`)
+		}
+
+		objs = make([]BidStepRow, 0, len(objRowsUpdated))
 		for _, obj := range objRowsUpdated {
-			if err = tx.Save(&obj).Error; err != nil {
-				return Wrapf(
-					err,
-					`tx save table_id="%s" from_amount="%s"`,
-					obj.TableID,
-					obj.FromAmount.StringFixed(2),
-				)
-			}
+			objs = append(objs, obj)
+		}
+
+		if err = tx.Save(&objs).Error; err != nil {
+			return Wrap(err, `tx save rows`)
 		}
 
 		return nil
