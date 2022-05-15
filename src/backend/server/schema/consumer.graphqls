@@ -1,0 +1,5 @@
+type Consumer {
+  id: ID!
+  nickname: String!
+  form: Map
+}

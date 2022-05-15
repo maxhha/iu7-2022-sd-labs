@@ -1,0 +1,5 @@
+scalar Map
+
+type TokenResult {
+  token: String!
+}

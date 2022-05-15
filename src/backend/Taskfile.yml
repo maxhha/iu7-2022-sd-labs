@@ -25,6 +25,46 @@ tasks:
     generates:
       - adapters/gorm_repositories/*_gen.go
 
+  gen:gql:
+    desc: Generates GraphQL resolvers and models
+    vars:
+      CONFIG: config/gqlgen.yml
+    cmds:
+      - go run github.com/99designs/gqlgen generate --config {{.CONFIG}}
+    sources:
+      - "{{.CONFIG}}"
+      - server/models/*.go
+      - server/resolvers/**/*.resolvers.go
+      - server/schema/**/*.graphqls
+    generates:
+      - server/models/models_gen.go
+      - server/resolvers/**/*.resolvers.go
+      - server/generated/generated.go
+
+  create:dev-network:
+    desc: Creates dev network
+    cmds:
+      - docker network create iu7-2022-sd-labs_backend-dev
+    status:
+      - test "$(docker network inspect iu7-2022-sd-labs_backend-dev)" != "[]"
+
+  dev:
+    desc: Run server in development mode
+    deps:
+      - gen:mocks
+      - gen:gorm
+      - create:dev-network
+    env:
+      CONFIG_FILE: config/server-dev.yml
+    vars:
+      DOCKERCOMPOSE: config/docker-compose.dev.yml
+
+    cmds:
+      - docker-compose -f {{.DOCKERCOMPOSE}} up -d
+      - defer: docker-compose -f {{.DOCKERCOMPOSE}} stop
+      - sleep 1
+      - air -c config/air.toml
+
   test:
     desc: Run test with colorful output
     deps:

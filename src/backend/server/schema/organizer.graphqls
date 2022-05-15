@@ -1,0 +1,8 @@
+type Organizer {
+  id: ID!
+  name: String!
+}
+
+extend type Mutation {
+  createOrganizer(name: String!): TokenResult!
+}
