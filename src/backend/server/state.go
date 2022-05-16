@@ -2,10 +2,14 @@ package server
 
 import (
 	"fmt"
+	"iu7-2022-sd-labs/adapters/consumer_validator"
+	"iu7-2022-sd-labs/adapters/dataloader"
+	"iu7-2022-sd-labs/adapters/event_bus"
 	"iu7-2022-sd-labs/adapters/gorm_repositories"
 	"iu7-2022-sd-labs/adapters/jwt_auth"
 	"iu7-2022-sd-labs/app"
 	"iu7-2022-sd-labs/buisness/interactors"
+	"iu7-2022-sd-labs/buisness/ports/services"
 	"iu7-2022-sd-labs/configuration"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/handlers"
@@ -31,17 +35,22 @@ type ServerState struct {
 
 	allowOrigins []string
 
-	signingKey          string
-	repoConfig          configuration.GORMRepositoryConfig
-	repo                *gorm_repositories.GORMRepository
-	auth                *jwt_auth.JWTAuth
-	organizerInteractor *interactors.OrganizerInteractor
-	resolver            *resolvers.Resolver
-	schema              graphql.ExecutableSchema
-	graphqlConfig       configuration.GraphQLHandlerConfig
-	graphqlHandeler     gin.HandlerFunc
-	engine              *gin.Engine
-	server              *graceful.Server
+	signingKey                   string
+	repoConfig                   configuration.GORMRepositoryConfig
+	repo                         *gorm_repositories.GORMRepository
+	dataloader                   *dataloader.DataLoader
+	auth                         *jwt_auth.JWTAuth
+	consumerFormValidatorService services.ConsumerFormValidatorService
+	eventBus                     *event_bus.EventBus
+	consumerInteractor           *interactors.ConsumerInteractor
+	organizerInteractor          *interactors.OrganizerInteractor
+	roomInteractor               *interactors.RoomInteractor
+	resolver                     *resolvers.Resolver
+	schema                       graphql.ExecutableSchema
+	graphqlConfig                configuration.GraphQLHandlerConfig
+	graphqlHandeler              gin.HandlerFunc
+	engine                       *gin.Engine
+	server                       *graceful.Server
 }
 
 func isStringArrayEqual(a []string, b []string) bool {
@@ -64,11 +73,15 @@ func NewServerState(configuration *configuration.Configuration) (*ServerState, e
 	config := configuration.Current()
 
 	errorChan := make(chan error)
+	eventBus := event_bus.NewEventBus()
+	consumerFormValidator := consumer_validator.NewConsumerFormValidatorService()
 
 	s := &ServerState{
-		logger:          logger,
-		runResultChan:   errorChan,
-		serverErrorChan: errorChan,
+		logger:                       logger,
+		runResultChan:                errorChan,
+		serverErrorChan:              errorChan,
+		eventBus:                     &eventBus,
+		consumerFormValidatorService: &consumerFormValidator,
 	}
 
 	var err error
@@ -78,42 +91,6 @@ func NewServerState(configuration *configuration.Configuration) (*ServerState, e
 	}
 
 	return s, nil
-}
-
-func (s *ServerState) Update(config *configuration.ConfigurationState) (app.AppState, error) {
-	return s.update(config)
-}
-
-func (s *ServerState) update(config *configuration.ConfigurationState) (*ServerState, error) {
-	s.logger.Println("state update")
-	nextState := *s
-
-	if err := nextState.updateRepo(s, config); err != nil {
-		return nil, Wrap(err, "update repo")
-	}
-	if err := nextState.updateAuth(s, config); err != nil {
-		return nil, Wrap(err, "update auth")
-	}
-	if err := nextState.updateOrganizerInteractor(s, config); err != nil {
-		return nil, Wrap(err, "update organizer interactor")
-	}
-	if err := nextState.updateResolver(s, config); err != nil {
-		return nil, Wrap(err, "update resolver")
-	}
-	if err := nextState.updateSchema(s, config); err != nil {
-		return nil, Wrap(err, "update schema")
-	}
-	if err := nextState.updateGraphqlHandler(s, config); err != nil {
-		return nil, Wrap(err, "update graphql handler")
-	}
-	if err := nextState.updateEngine(s, config); err != nil {
-		return nil, Wrap(err, "update engine")
-	}
-	if err := nextState.updateServer(s, config); err != nil {
-		return nil, Wrap(err, "update server")
-	}
-
-	return &nextState, nil
 }
 
 func (s *ServerState) ChangeTo(state app.AppState) error {
@@ -156,6 +133,51 @@ func (s *ServerState) listenAndServe() {
 	s.serverErrorChan <- s.server.ListenAndServe()
 }
 
+func (s *ServerState) Update(config *configuration.ConfigurationState) (app.AppState, error) {
+	return s.update(config)
+}
+
+func (s *ServerState) update(config *configuration.ConfigurationState) (*ServerState, error) {
+	s.logger.Println("state update")
+	nextState := *s
+
+	if err := nextState.updateRepo(s, config); err != nil {
+		return nil, Wrap(err, "update repo")
+	}
+	if err := nextState.updateDataLoader(s, config); err != nil {
+		return nil, Wrap(err, "update data loader")
+	}
+	if err := nextState.updateAuth(s, config); err != nil {
+		return nil, Wrap(err, "update auth")
+	}
+	if err := nextState.updateOrganizerInteractor(s, config); err != nil {
+		return nil, Wrap(err, "update organizer interactor")
+	}
+	if err := nextState.updateConsumerInteractor(s, config); err != nil {
+		return nil, Wrap(err, "update consumer interactor")
+	}
+	if err := nextState.updateRoomInteractor(s, config); err != nil {
+		return nil, Wrap(err, "update room interactor")
+	}
+	if err := nextState.updateResolver(s, config); err != nil {
+		return nil, Wrap(err, "update resolver")
+	}
+	if err := nextState.updateSchema(s, config); err != nil {
+		return nil, Wrap(err, "update schema")
+	}
+	if err := nextState.updateGraphqlHandler(s, config); err != nil {
+		return nil, Wrap(err, "update graphql handler")
+	}
+	if err := nextState.updateEngine(s, config); err != nil {
+		return nil, Wrap(err, "update engine")
+	}
+	if err := nextState.updateServer(s, config); err != nil {
+		return nil, Wrap(err, "update server")
+	}
+
+	return &nextState, nil
+}
+
 func (s *ServerState) updateEngine(prev *ServerState, config *configuration.ConfigurationState) error {
 	s.allowOrigins = config.AllowOrigins()
 	isAllowOriginsEmpty := len(s.allowOrigins) == 0
@@ -177,6 +199,9 @@ func (s *ServerState) updateEngine(prev *ServerState, config *configuration.Conf
 			return s.auth
 		},
 		s.logger,
+		func() ports.DataLoader {
+			return s.dataloader
+		},
 	)
 
 	return nil
@@ -188,6 +213,7 @@ func newEngine(
 	playgroundHandler gin.HandlerFunc,
 	authGetter func() ports.Auth,
 	logger *log.Logger,
+	dataLoaderGetter func() ports.DataLoader,
 ) *gin.Engine {
 	allowOrigins := config.AllowOrigins()
 	engine := gin.Default()
@@ -198,6 +224,7 @@ func newEngine(
 	engine.Use(cors.New(corsConfig))
 
 	engine.Use(newAuthMiddleware(authGetter, logger))
+	engine.Use(newDataLoaderMiddleware(dataLoaderGetter))
 
 	engine.Any(graphqlRoute, graphqlHandler)
 	engine.GET(graphiqlRoute, playgroundHandler)
@@ -235,6 +262,15 @@ func newAuthMiddleware(auth func() ports.Auth, logger *log.Logger) gin.HandlerFu
 			logger.Printf("error on parse organizer token: %v\n", err)
 			return
 		}
+	}
+}
+
+func newDataLoaderMiddleware(getDataloader func() ports.DataLoader) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer c.Next()
+		dataloader := getDataloader()
+		ctx := dataloader.WithNewLoader(c.Request.Context())
+		c.Request = c.Request.WithContext(ctx)
 	}
 }
 
@@ -291,6 +327,18 @@ func (s *ServerState) updateRepo(prev *ServerState, config *configuration.Config
 	return nil
 }
 
+func (s *ServerState) updateDataLoader(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := prev.repo != s.repo
+	shouldReset := repoChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	s.dataloader = dataloader.NewDataLoader(s.repo)
+	return nil
+}
+
 func (s *ServerState) updateAuth(prev *ServerState, config *configuration.ConfigurationState) error {
 	s.signingKey = config.SigningKey()
 
@@ -312,6 +360,20 @@ func (s *ServerState) updateAuth(prev *ServerState, config *configuration.Config
 	return nil
 }
 
+func (s *ServerState) updateConsumerInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	eventBusChanged := s.eventBus != prev.eventBus
+	shouldReset := repoChanged || eventBusChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	consumerInteractor := interactors.NewConsumerInteractor(s.repo, s.eventBus, s.consumerFormValidatorService)
+	s.consumerInteractor = &consumerInteractor
+	return nil
+}
+
 func (s *ServerState) updateOrganizerInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
 	repoChanged := s.repo != prev.repo
 	shouldReset := repoChanged
@@ -320,21 +382,47 @@ func (s *ServerState) updateOrganizerInteractor(prev *ServerState, config *confi
 		return nil
 	}
 
-	orgainzerInteractor := interactors.NewOrganizerInteractor(s.repo.Organizer())
-	s.organizerInteractor = &orgainzerInteractor
+	organizerInteractor := interactors.NewOrganizerInteractor(s.repo.Organizer())
+	s.organizerInteractor = &organizerInteractor
 	return nil
 }
 
-func (s *ServerState) updateResolver(prev *ServerState, config *configuration.ConfigurationState) error {
-	organizerInteractorChanged := s.organizerInteractor != prev.organizerInteractor
-	authChanged := s.auth != prev.auth
-	shouldReset := organizerInteractorChanged || authChanged
+func (s *ServerState) updateRoomInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	shouldReset := repoChanged
 
 	if !shouldReset {
 		return nil
 	}
 
-	resolver := resolvers.New(s.organizerInteractor, s.auth)
+	roomInteractor := interactors.NewRoomInteractor(s.repo.Organizer(), s.repo.Room())
+	s.roomInteractor = &roomInteractor
+	return nil
+}
+
+func (s *ServerState) updateResolver(prev *ServerState, config *configuration.ConfigurationState) error {
+	organizerInteractorChanged := s.organizerInteractor != prev.organizerInteractor
+	consumerInteractorChanged := s.consumerInteractor != prev.consumerInteractor
+	roomInteractorChanged := s.roomInteractor != prev.roomInteractor
+	dataLoaderChanged := s.dataloader != prev.dataloader
+	authChanged := s.auth != prev.auth
+	shouldReset := authChanged ||
+		organizerInteractorChanged ||
+		consumerInteractorChanged ||
+		roomInteractorChanged ||
+		dataLoaderChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	resolver := resolvers.New(
+		s.organizerInteractor,
+		s.consumerInteractor,
+		s.roomInteractor,
+		s.auth,
+		s.dataloader,
+	)
 	s.resolver = &resolver
 
 	return nil

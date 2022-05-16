@@ -17,14 +17,14 @@ func (r *queryResolver) Viewer(ctx context.Context) (models.Viewer, error) {
 	organzier, err := ports.ForOrganizer(ctx)
 	if err == nil {
 		return (&models.Organizer{}).From(&organzier), nil
-	} else {
+	} else if !Is(err, ports.ErrUnauthorized) {
 		errors = multierror.Append(errors, err)
 	}
 
 	consumer, err := ports.ForConsumer(ctx)
 	if err == nil {
 		return (&models.Consumer{}).From(&consumer), nil
-	} else {
+	} else if !Is(err, ports.ErrUnauthorized) {
 		errors = multierror.Append(errors, err)
 	}
 

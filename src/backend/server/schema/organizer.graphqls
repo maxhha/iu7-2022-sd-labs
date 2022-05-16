@@ -19,7 +19,7 @@ type OrganizerConnection {
 }
 
 input OrganizerFilter {
-  ids: [ID!]!
+  ids: [ID!]
   name: String
 }
 

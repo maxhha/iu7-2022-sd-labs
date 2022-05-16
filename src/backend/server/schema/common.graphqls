@@ -1,4 +1,5 @@
 scalar Map
+scalar Dict
 
 type TokenResult {
   token: String!

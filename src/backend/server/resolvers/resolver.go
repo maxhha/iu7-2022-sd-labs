@@ -11,15 +11,24 @@ import (
 
 type Resolver struct {
 	organizerInteractor interactors.OrganizerInteractor
+	consumerInteractor  interactors.ConsumerInteractor
+	roomInteractor      interactors.RoomInteractor
 	auth                ports.Auth
+	dataloader          ports.DataLoader
 }
 
 func New(
 	organizerInteractor interactors.OrganizerInteractor,
+	consumerInteractor interactors.ConsumerInteractor,
+	roomInteractor interactors.RoomInteractor,
 	auth ports.Auth,
+	dataloader ports.DataLoader,
 ) Resolver {
 	return Resolver{
 		organizerInteractor,
+		consumerInteractor,
+		roomInteractor,
 		auth,
+		dataloader,
 	}
 }

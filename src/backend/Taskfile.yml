@@ -25,12 +25,36 @@ tasks:
     generates:
       - adapters/gorm_repositories/*_gen.go
 
+  gen:gqlresolvers:
+    desc: Generates gorm repositories
+    cmds:
+      - go generate -run "/codegen/graphql_resolvers/main.go" ./...
+    sources:
+      - server/resolvers/generated.go
+      - codegen/graphql_resolvers/*
+    generates:
+      - server/resolvers/*.resolvers_gen.go
+
+  gen:dataloader:
+    desc: Generates dataloader
+    vars:
+      SCRIPT: codegen/dataloader/main.go
+      OUT: ./adapters/dataloader/dataloader_gen.go
+      ENTITIES: Organizer,Room,Consumer
+    cmds:
+      - go run {{.SCRIPT}} --out {{.OUT}} --entities {{.ENTITIES}}
+    sources:
+      - "{{.SCRIPT}}"
+    generates:
+      - "{{.OUT}}"
+
   gen:gql:
     desc: Generates GraphQL resolvers and models
     vars:
       CONFIG: config/gqlgen.yml
     cmds:
-      - go run github.com/99designs/gqlgen generate --config {{.CONFIG}}
+      - time go run github.com/99designs/gqlgen generate --config {{.CONFIG}}
+      - task: gen:gqlresolvers
     sources:
       - "{{.CONFIG}}"
       - server/models/*.go
@@ -66,6 +90,7 @@ tasks:
         vars:
           ENV: dev
           IGNORE_ERROR: true
+      - gen:dataloader
     env:
       CONFIG_FILE: config/server-dev.yml
     vars:

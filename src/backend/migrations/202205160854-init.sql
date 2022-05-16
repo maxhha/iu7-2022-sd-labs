@@ -63,6 +63,14 @@ SELECT EXISTS (
         deleted_at TIMESTAMP
     );
 
+    CREATE TABLE room_consumer_rel (
+        room_id UUID,
+        consumer_id UUID,
+        PRIMARY KEY (room_id, consumer_id),
+        CONSTRAINT fk_room FOREIGN KEY (room_id) REFERENCES rooms(id),
+        CONSTRAINT fk_consumer FOREIGN KEY (consumer_id) REFERENCES consumers(id)
+    );
+
     CREATE TABLE auctions (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
         room_id UUID NOT NULL,

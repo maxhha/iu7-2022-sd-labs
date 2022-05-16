@@ -57,6 +57,9 @@ models:
       - github.com/99designs/gqlgen/graphql.Int
       - github.com/99designs/gqlgen/graphql.Int64
       - github.com/99designs/gqlgen/graphql.Int32
+  Dict:
+    model:
+      - iu7-2022-sd-labs/server/models.Dict
   # DateTime:
   #   model:
   #     - auction-back/models.Time

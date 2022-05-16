@@ -29,8 +29,9 @@ type ConsumerConnectionEdge struct {
 }
 
 type ConsumerFilter struct {
-	Ids  []string `json:"ids"`
-	Name *string  `json:"name"`
+	Ids      []string          `json:"ids"`
+	Nickname *string           `json:"nickname"`
+	Form     map[string]string `json:"form"`
 }
 
 type ConsumerResult struct {
@@ -61,4 +62,26 @@ type PageInfo struct {
 	HasPreviousPage bool    `json:"hasPreviousPage"`
 	StartCursor     *string `json:"startCursor"`
 	EndCursor       *string `json:"endCursor"`
+}
+
+type RoomConnection struct {
+	PageInfo *PageInfo            `json:"pageInfo"`
+	Edges    []RoomConnectionEdge `json:"edges"`
+}
+
+type RoomConnectionEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Room  `json:"node"`
+}
+
+type RoomFilter struct {
+	Ids        []string `json:"ids"`
+	Name       *string  `json:"name"`
+	Address    *string  `json:"address"`
+	Orgainzers []string `json:"orgainzers"`
+	Consumers  []string `json:"consumers"`
+}
+
+type RoomResult struct {
+	Room *Room `json:"room"`
 }

@@ -58,7 +58,7 @@ func (r *RoomRepository) setConsumerIDs(db *gorm.DB, ent *entities.Room) ([]stri
 	var consumerIDs []string
 	err := r.db.Table(consumersInRoomTable).
 		Select("consumer_id").
-		Where("table_id = ?", ent.ID()).
+		Where("room_id = ?", ent.ID()).
 		Scan(&consumerIDs).
 		Error
 

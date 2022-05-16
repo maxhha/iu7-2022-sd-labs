@@ -19,8 +19,9 @@ type ConsumerConnection {
 }
 
 input ConsumerFilter {
-  ids: [ID!]!
-  name: String
+  ids: [ID!]
+  nickname: String
+  form: Dict
 }
 
 extend type Query {
@@ -29,4 +30,5 @@ extend type Query {
 
 extend type Mutation {
   createConsumer(nickname: String!, form: Map!): TokenResult!
+  updateConsumer(nickname: String!, form: Map!): ConsumerResult!
 }
