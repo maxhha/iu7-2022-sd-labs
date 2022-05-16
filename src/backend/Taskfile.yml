@@ -48,12 +48,24 @@ tasks:
     status:
       - test "$(docker network inspect iu7-2022-sd-labs_backend-dev)" != "[]"
 
+  restart:migration:
+    desc: Restarts migration container
+    cmds:
+      - cmd: docker restart iu7-2022-sd-labs-migration-{{.ENV}}-1
+        ignore_error: "{{.IGNORE_ERROR | default false}}"
+    sources:
+      - migrations/*
+
   dev:
     desc: Run server in development mode
     deps:
       - gen:mocks
       - gen:gorm
       - create:dev-network
+      - task: restart:migration
+        vars:
+          ENV: dev
+          IGNORE_ERROR: true
     env:
       CONFIG_FILE: config/server-dev.yml
     vars:

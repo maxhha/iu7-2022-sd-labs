@@ -9,6 +9,7 @@ import (
 	"iu7-2022-sd-labs/configuration"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/handlers"
+	"iu7-2022-sd-labs/server/ports"
 	"iu7-2022-sd-labs/server/resolvers"
 	"log"
 	"net/http"
@@ -172,6 +173,10 @@ func (s *ServerState) updateEngine(prev *ServerState, config *configuration.Conf
 			s.graphqlHandeler(ctx)
 		},
 		handlers.NewPlaygroundHandler(graphqlRoute),
+		func() ports.Auth {
+			return s.auth
+		},
+		s.logger,
 	)
 
 	return nil
@@ -181,6 +186,8 @@ func newEngine(
 	config *configuration.ConfigurationState,
 	graphqlHandler gin.HandlerFunc,
 	playgroundHandler gin.HandlerFunc,
+	authGetter func() ports.Auth,
+	logger *log.Logger,
 ) *gin.Engine {
 	allowOrigins := config.AllowOrigins()
 	engine := gin.Default()
@@ -190,12 +197,45 @@ func newEngine(
 	corsConfig.AllowMethods = []string{"POST, GET, OPTIONS"}
 	engine.Use(cors.New(corsConfig))
 
-	// engine.Use(auth.New(&db))
+	engine.Use(newAuthMiddleware(authGetter, logger))
 
 	engine.Any(graphqlRoute, graphqlHandler)
 	engine.GET(graphiqlRoute, playgroundHandler)
 
 	return engine
+}
+
+func newAuthMiddleware(auth func() ports.Auth, logger *log.Logger) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		defer c.Next()
+		a := auth()
+
+		tokens, ok := c.Request.Header["Authorization"]
+
+		if !ok || len(tokens) == 0 {
+			return
+		}
+
+		token := tokens[0]
+
+		consumer, err := a.ParseConsumerToken(token)
+		if err == nil {
+			ctx := ports.WithConsumer(c.Request.Context(), consumer)
+			c.Request = c.Request.WithContext(ctx)
+		} else if !Is(err, ports.ErrWrongSubject) {
+			logger.Printf("error on parse consuemr token: %v\n", err)
+			return
+		}
+
+		organizer, err := a.ParseOrganizerToken(token)
+		if err == nil {
+			ctx := ports.WithOrganizer(c.Request.Context(), organizer)
+			c.Request = c.Request.WithContext(ctx)
+		} else if !Is(err, ports.ErrWrongSubject) {
+			logger.Printf("error on parse organizer token: %v\n", err)
+			return
+		}
+	}
 }
 
 func (s *ServerState) updateServer(prev *ServerState, config *configuration.ConfigurationState) error {
@@ -309,7 +349,6 @@ func (s *ServerState) updateSchema(prev *ServerState, config *configuration.Conf
 	}
 
 	schemaConfig := generated.Config{Resolvers: s.resolver}
-	// config.Directives.HasRole = hasRoleDirective(roleCheckers)
 	s.schema = generated.NewExecutableSchema(schemaConfig)
 
 	return nil

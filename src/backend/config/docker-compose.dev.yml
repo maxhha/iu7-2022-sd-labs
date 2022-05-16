@@ -11,16 +11,16 @@ services:
     networks:
       - backend-dev
 
-  # migration-dev:
-  #   depends_on:
-  #     db-dev:
-  #       condition: service_healthy
-  #   extends:
-  #     file: docker-compose.yml
-  #     service: migration
-  #   env_file: .db-dev.env
-  #   networks:
-  #     - backend-dev
+  migration-dev:
+    depends_on:
+      db-dev:
+        condition: service_healthy
+    extends:
+      file: docker-compose.yml
+      service: migration
+    env_file: .db-dev.env
+    networks:
+      - backend-dev
 
   # # TODO: remove redis from dev or automate user path
   # mock-redis-dev:

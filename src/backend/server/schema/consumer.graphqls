@@ -3,3 +3,30 @@ type Consumer {
   nickname: String!
   form: Map
 }
+
+type ConsumerResult {
+  consumer: Consumer!
+}
+
+type ConsumerConnectionEdge {
+  cursor: ID!
+  node: Consumer!
+}
+
+type ConsumerConnection {
+  pageInfo: PageInfo!
+  edges: [ConsumerConnectionEdge!]!
+}
+
+input ConsumerFilter {
+  ids: [ID!]!
+  name: String
+}
+
+extend type Query {
+  consumers(first: Int, after: ID, filter: ConsumerFilter): ConsumerConnection!
+}
+
+extend type Mutation {
+  createConsumer(nickname: String!, form: Map!): TokenResult!
+}

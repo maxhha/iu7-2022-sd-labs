@@ -6,21 +6,59 @@ type Viewer interface {
 	IsViewer()
 }
 
-type Consumer struct {
-	ID       string                 `json:"id"`
-	Nickname string                 `json:"nickname"`
-	Form     map[string]interface{} `json:"form"`
+type BidStepRow struct {
+	FromAmount float64 `json:"fromAmount"`
+	Step       float64 `json:"step"`
 }
 
-func (Consumer) IsViewer() {}
-
-type Organizer struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
+type BidStepTable struct {
+	ID        string       `json:"id"`
+	Name      string       `json:"name"`
+	Organizer *Organizer   `json:"organizer"`
+	Rows      []BidStepRow `json:"rows"`
 }
 
-func (Organizer) IsViewer() {}
+type ConsumerConnection struct {
+	PageInfo *PageInfo                `json:"pageInfo"`
+	Edges    []ConsumerConnectionEdge `json:"edges"`
+}
 
-type TokenResult struct {
-	Token string `json:"token"`
+type ConsumerConnectionEdge struct {
+	Cursor string    `json:"cursor"`
+	Node   *Consumer `json:"node"`
+}
+
+type ConsumerFilter struct {
+	Ids  []string `json:"ids"`
+	Name *string  `json:"name"`
+}
+
+type ConsumerResult struct {
+	Consumer *Consumer `json:"consumer"`
+}
+
+type OrganizerConnection struct {
+	PageInfo *PageInfo                 `json:"pageInfo"`
+	Edges    []OrganizerConnectionEdge `json:"edges"`
+}
+
+type OrganizerConnectionEdge struct {
+	Cursor string     `json:"cursor"`
+	Node   *Organizer `json:"node"`
+}
+
+type OrganizerFilter struct {
+	Ids  []string `json:"ids"`
+	Name *string  `json:"name"`
+}
+
+type OrganizerResult struct {
+	Orgainzer *Organizer `json:"orgainzer"`
+}
+
+type PageInfo struct {
+	HasNextPage     bool    `json:"hasNextPage"`
+	HasPreviousPage bool    `json:"hasPreviousPage"`
+	StartCursor     *string `json:"startCursor"`
+	EndCursor       *string `json:"endCursor"`
 }

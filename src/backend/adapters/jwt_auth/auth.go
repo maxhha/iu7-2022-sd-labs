@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"iu7-2022-sd-labs/buisness/entities"
 	"iu7-2022-sd-labs/buisness/ports/repositories"
+	"iu7-2022-sd-labs/server/ports"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -84,7 +85,7 @@ func (a *JWTAuth) parseToken(tokenString string, targetSubject string) (string, 
 	}
 
 	if subject != targetSubject {
-		return "", fmt.Errorf("subject is not user")
+		return "", ports.ErrWrongSubject
 	}
 
 	id, ok := claims["jti"].(string)

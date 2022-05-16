@@ -1,0 +1,11 @@
+type BidStepRow {
+  fromAmount: Float!
+  step: Float!
+}
+
+type BidStepTable {
+  id: ID!
+  name: String!
+  organizer: Organizer!
+  rows: [BidStepRow!]!
+}

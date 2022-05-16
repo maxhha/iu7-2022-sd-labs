@@ -5,16 +5,28 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
-	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
+	"iu7-2022-sd-labs/server/ports"
+
+	"github.com/hashicorp/go-multierror"
 )
 
 func (r *queryResolver) Viewer(ctx context.Context) (models.Viewer, error) {
-	panic(fmt.Errorf("not implemented"))
+	var errors error
+
+	organzier, err := ports.ForOrganizer(ctx)
+	if err == nil {
+		return (&models.Organizer{}).From(&organzier), nil
+	} else {
+		errors = multierror.Append(errors, err)
+	}
+
+	consumer, err := ports.ForConsumer(ctx)
+	if err == nil {
+		return (&models.Consumer{}).From(&consumer), nil
+	} else {
+		errors = multierror.Append(errors, err)
+	}
+
+	return nil, errors
 }
-
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
-type queryResolver struct{ *Resolver }

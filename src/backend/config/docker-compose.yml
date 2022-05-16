@@ -15,13 +15,13 @@ services:
       timeout: 5s
       retries: 5
 
-  # migration:
-  #   build:
-  #     context: ./migrations
-  #   working_dir: /usr/app
-  #   entrypoint: ./migrate
-  #   volumes:
-  #     - ../migrations:/usr/app
+  migration:
+    build:
+      context: ./migrations
+    working_dir: /usr/app
+    entrypoint: ./migrate
+    volumes:
+      - ../migrations:/usr/app
 
   # mock-redis:
   #   image: redis:6.2.6-alpine3.15

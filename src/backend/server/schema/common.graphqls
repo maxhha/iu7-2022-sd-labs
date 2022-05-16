@@ -3,3 +3,10 @@ scalar Map
 type TokenResult {
   token: String!
 }
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: ID
+  endCursor: ID
+}
