@@ -406,11 +406,13 @@ func (s *ServerState) updateResolver(prev *ServerState, config *configuration.Co
 	roomInteractorChanged := s.roomInteractor != prev.roomInteractor
 	dataLoaderChanged := s.dataloader != prev.dataloader
 	authChanged := s.auth != prev.auth
+	eventBusChanged := s.eventBus != prev.eventBus
 	shouldReset := authChanged ||
 		organizerInteractorChanged ||
 		consumerInteractorChanged ||
 		roomInteractorChanged ||
-		dataLoaderChanged
+		dataLoaderChanged ||
+		eventBusChanged
 
 	if !shouldReset {
 		return nil
@@ -422,6 +424,8 @@ func (s *ServerState) updateResolver(prev *ServerState, config *configuration.Co
 		s.roomInteractor,
 		s.auth,
 		s.dataloader,
+		s.eventBus,
+		s.logger,
 	)
 	s.resolver = &resolver
 

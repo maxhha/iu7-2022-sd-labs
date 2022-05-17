@@ -12,7 +12,9 @@ type EventBus struct {
 }
 
 func NewEventBus() EventBus {
-	return EventBus{}
+	return EventBus{
+		subs: make(map[int]chan bus.Event),
+	}
 }
 
 func (b *EventBus) Subscribe() (<-chan bus.Event, int) {

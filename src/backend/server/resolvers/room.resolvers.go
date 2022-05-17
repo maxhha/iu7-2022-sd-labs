@@ -5,6 +5,7 @@ package resolvers
 
 import (
 	"context"
+	"iu7-2022-sd-labs/buisness/ports/bus"
 	"iu7-2022-sd-labs/buisness/ports/repositories"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
@@ -41,6 +42,10 @@ func (r *roomResolver) Organizer(ctx context.Context, obj *models.Room) (*models
 }
 
 func (r *roomResolver) Consumers(ctx context.Context, obj *models.Room) ([]models.Consumer, error) {
+	if len(obj.ConsumerIDs) == 0 {
+		return nil, nil
+	}
+
 	consumers, err := r.consumerInteractor.Find(&repositories.ConsumerFindParams{
 		Filter: &repositories.ConsumerFilter{
 			IDs: obj.ConsumerIDs,
@@ -53,7 +58,39 @@ func (r *roomResolver) Consumers(ctx context.Context, obj *models.Room) ([]model
 	return models.ConsumerArrayFromEntites(consumers), nil
 }
 
+func (r *subscriptionResolver) ConsumersInRoomUpdated(ctx context.Context, roomID string) (<-chan *models.Room, error) {
+	eventChan, subID := r.eventBus.Subscribe()
+	go func() {
+		<-ctx.Done()
+		r.eventBus.Unsubscribe(subID)
+	}()
+
+	ch := make(chan *models.Room, 1)
+
+	go func() {
+		for event := range eventChan {
+			switch event := event.(type) {
+			case *bus.EvtConsumerEnteredRoom:
+				if roomID == event.Room.ID() {
+					ch <- (&models.Room{}).From(&event.Room)
+				}
+			case *bus.EvtConsumerExitedRoom:
+				if roomID == event.Room.ID() {
+					ch <- (&models.Room{}).From(&event.Room)
+				}
+			default:
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
 // Room returns generated.RoomResolver implementation.
 func (r *Resolver) Room() generated.RoomResolver { return &roomResolver{r} }
 
+// Subscription returns generated.SubscriptionResolver implementation.
+func (r *Resolver) Subscription() generated.SubscriptionResolver { return &subscriptionResolver{r} }
+
 type roomResolver struct{ *Resolver }
+type subscriptionResolver struct{ *Resolver }

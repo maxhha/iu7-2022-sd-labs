@@ -46,6 +46,26 @@ func (r *mutationResolver) UpdateConsumer(ctx context.Context, nickname string, 
 	}, nil
 }
 
+func (r *mutationResolver) EnterRoom(ctx context.Context, roomID string) (bool, error) {
+	consumer, err := ports.ForConsumer(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.consumerInteractor.EnterRoom(consumer.ID(), roomID)
+	return err == nil, Wrap(err, "consumer interactor enter room")
+}
+
+func (r *mutationResolver) ExitRoom(ctx context.Context, roomID string) (bool, error) {
+	consumer, err := ports.ForConsumer(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	err = r.consumerInteractor.ExitRoom(consumer.ID(), roomID)
+	return err == nil, Wrap(err, "consumer interactor exit room")
+}
+
 func (r *queryResolver) Consumers(ctx context.Context, first *int, after *string, filter *models.ConsumerFilter) (*models.ConsumerConnection, error) {
 	return r.generatedPagination__Consumers(ctx, first, after, filter)
 }

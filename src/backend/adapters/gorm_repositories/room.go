@@ -221,32 +221,36 @@ func (r *RoomRepository) Update(id string, updateFn func(ent *entities.Room) err
 		}
 
 		type Rel struct {
-			ConsumerID string
-			RoomID     string
+			ConsumerID string `gorm:"primaryKey"`
+			RoomID     string `gorm:"primaryKey"`
 		}
 
-		objs := make([]Rel, 0, len(objRelsDeleted))
-		for id := range objRelsDeleted {
-			objs = append(objs, Rel{
-				RoomID:     roomID,
-				ConsumerID: id,
-			})
+		if len(objRelsDeleted) > 0 {
+			objs := make([]Rel, 0, len(objRelsDeleted))
+			for id := range objRelsDeleted {
+				objs = append(objs, Rel{
+					RoomID:     roomID,
+					ConsumerID: id,
+				})
+			}
+
+			if err = tx.Table(consumersInRoomTable).Delete(&objs).Error; err != nil {
+				return Wrap(err, `tx delete rels`)
+			}
 		}
 
-		if err = tx.Table(consumersInRoomTable).Delete(&objs).Error; err != nil {
-			return Wrap(err, `tx delete rels`)
-		}
+		if len(objRelsCreated) > 0 {
+			objs := make([]Rel, 0, len(objRelsCreated))
+			for id := range objRelsCreated {
+				objs = append(objs, Rel{
+					RoomID:     roomID,
+					ConsumerID: id,
+				})
+			}
 
-		objs = make([]Rel, 0, len(objRelsCreated))
-		for id := range objRelsCreated {
-			objs = append(objs, Rel{
-				RoomID:     roomID,
-				ConsumerID: id,
-			})
-		}
-
-		if err = tx.Table(consumersInRoomTable).Create(&objs).Error; err != nil {
-			return Wrap(err, `tx create rels`)
+			if err = tx.Table(consumersInRoomTable).Create(&objs).Error; err != nil {
+				return Wrap(err, `tx create rels`)
+			}
 		}
 
 		return nil

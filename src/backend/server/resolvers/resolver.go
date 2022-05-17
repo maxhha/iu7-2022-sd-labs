@@ -1,8 +1,10 @@
 package resolvers
 
 import (
+	"iu7-2022-sd-labs/buisness/ports/bus"
 	"iu7-2022-sd-labs/buisness/ports/interactors"
 	"iu7-2022-sd-labs/server/ports"
+	"log"
 )
 
 // This file will not be regenerated automatically.
@@ -15,6 +17,8 @@ type Resolver struct {
 	roomInteractor      interactors.RoomInteractor
 	auth                ports.Auth
 	dataloader          ports.DataLoader
+	eventBus            bus.EventBus
+	logger              *log.Logger
 }
 
 func New(
@@ -23,6 +27,8 @@ func New(
 	roomInteractor interactors.RoomInteractor,
 	auth ports.Auth,
 	dataloader ports.DataLoader,
+	eventBus bus.EventBus,
+	logger *log.Logger,
 ) Resolver {
 	return Resolver{
 		organizerInteractor,
@@ -30,5 +36,7 @@ func New(
 		roomInteractor,
 		auth,
 		dataloader,
+		eventBus,
+		logger,
 	}
 }

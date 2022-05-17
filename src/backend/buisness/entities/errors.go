@@ -12,3 +12,4 @@ var ErrBidStepIsLessThenTable = errors.New("bid step is less then table")
 
 var ErrAlreadyExists = errors.New("already exists")
 var ErrNotFound = errors.New("not found")
+var ErrConsumerNotFound = errors.New("consumer not found")

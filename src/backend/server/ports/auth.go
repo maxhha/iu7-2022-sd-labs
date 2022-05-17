@@ -19,7 +19,8 @@ type contextKey struct {
 	name string
 }
 
-var organizerContextKey = &contextKey{"organizer"}
+var organizerContextKey = contextKey{"organizer"}
+var consumerContextKey = contextKey{"consumer"}
 var ErrUnauthorized = errors.New("unauthorized")
 
 func ForOrganizer(ctx context.Context) (entities.Organizer, error) {
@@ -35,7 +36,7 @@ func WithOrganizer(c context.Context, ent entities.Organizer) context.Context {
 }
 
 func ForConsumer(ctx context.Context) (entities.Consumer, error) {
-	ent, ok := ctx.Value(organizerContextKey).(entities.Consumer)
+	ent, ok := ctx.Value(consumerContextKey).(entities.Consumer)
 	if !ok {
 		return entities.Consumer{}, ErrUnauthorized
 	}
@@ -43,5 +44,5 @@ func ForConsumer(ctx context.Context) (entities.Consumer, error) {
 }
 
 func WithConsumer(c context.Context, ent entities.Consumer) context.Context {
-	return context.WithValue(c, organizerContextKey, ent)
+	return context.WithValue(c, consumerContextKey, ent)
 }

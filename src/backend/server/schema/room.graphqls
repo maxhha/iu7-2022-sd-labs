@@ -35,3 +35,7 @@ extend type Query {
 extend type Mutation {
   createRoom(name: String!, address: String!): RoomResult!
 }
+
+extend type Subscription {
+  consumersInRoomUpdated(roomId: ID!): Room!
+}

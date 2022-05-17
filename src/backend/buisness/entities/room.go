@@ -88,7 +88,7 @@ func (obj *Room) RemoveConsumerID(consumerID string) error {
 	}
 
 	if !removed {
-		return errors.Wrapf(ErrNotFound, "consumerID='%s'", consumerID)
+		return errors.Wrapf(ErrConsumerNotFound, "consumerID='%s'", consumerID)
 	}
 
 	if len(newConsumerIDs) > 0 {

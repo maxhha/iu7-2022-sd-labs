@@ -41,4 +41,6 @@ func (e *EvtOfferCreated) IsEvent() {}
 
 type EventBus interface {
 	Notify(event Event)
+	Subscribe() (<-chan Event, int)
+	Unsubscribe(id int)
 }

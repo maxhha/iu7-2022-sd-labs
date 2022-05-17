@@ -7,6 +7,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"iu7-2022-sd-labs/server/models"
 	"strconv"
 	"sync"
@@ -40,6 +41,7 @@ type ResolverRoot interface {
 	Organizer() OrganizerResolver
 	Query() QueryResolver
 	Room() RoomResolver
+	Subscription() SubscriptionResolver
 }
 
 type DirectiveRoot struct {
@@ -82,6 +84,8 @@ type ComplexityRoot struct {
 		CreateConsumer  func(childComplexity int, nickname string, form map[string]interface{}) int
 		CreateOrganizer func(childComplexity int, name string) int
 		CreateRoom      func(childComplexity int, name string, address string) int
+		EnterRoom       func(childComplexity int, roomID string) int
+		ExitRoom        func(childComplexity int, roomID string) int
 		UpdateConsumer  func(childComplexity int, nickname string, form map[string]interface{}) int
 		UpdateOrganizer func(childComplexity int, name string) int
 	}
@@ -142,6 +146,10 @@ type ComplexityRoot struct {
 		Room func(childComplexity int) int
 	}
 
+	Subscription struct {
+		ConsumersInRoomUpdated func(childComplexity int, roomID string) int
+	}
+
 	TokenResult struct {
 		Token func(childComplexity int) int
 	}
@@ -150,6 +158,8 @@ type ComplexityRoot struct {
 type MutationResolver interface {
 	CreateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.TokenResult, error)
 	UpdateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.ConsumerResult, error)
+	EnterRoom(ctx context.Context, roomID string) (bool, error)
+	ExitRoom(ctx context.Context, roomID string) (bool, error)
 	CreateOrganizer(ctx context.Context, name string) (*models.TokenResult, error)
 	UpdateOrganizer(ctx context.Context, name string) (*models.OrganizerResult, error)
 	CreateRoom(ctx context.Context, name string, address string) (*models.RoomResult, error)
@@ -166,6 +176,9 @@ type QueryResolver interface {
 type RoomResolver interface {
 	Organizer(ctx context.Context, obj *models.Room) (*models.Organizer, error)
 	Consumers(ctx context.Context, obj *models.Room) ([]models.Consumer, error)
+}
+type SubscriptionResolver interface {
+	ConsumersInRoomUpdated(ctx context.Context, roomID string) (<-chan *models.Room, error)
 }
 
 type executableSchema struct {
@@ -316,6 +329,30 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateRoom(childComplexity, args["name"].(string), args["address"].(string)), true
+
+	case "Mutation.enterRoom":
+		if e.complexity.Mutation.EnterRoom == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_enterRoom_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.EnterRoom(childComplexity, args["roomId"].(string)), true
+
+	case "Mutation.exitRoom":
+		if e.complexity.Mutation.ExitRoom == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_exitRoom_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.ExitRoom(childComplexity, args["roomId"].(string)), true
 
 	case "Mutation.updateConsumer":
 		if e.complexity.Mutation.UpdateConsumer == nil {
@@ -538,6 +575,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.RoomResult.Room(childComplexity), true
 
+	case "Subscription.consumersInRoomUpdated":
+		if e.complexity.Subscription.ConsumersInRoomUpdated == nil {
+			break
+		}
+
+		args, err := ec.field_Subscription_consumersInRoomUpdated_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Subscription.ConsumersInRoomUpdated(childComplexity, args["roomId"].(string)), true
+
 	case "TokenResult.token":
 		if e.complexity.TokenResult.Token == nil {
 			break
@@ -584,6 +633,23 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 			ctx = graphql.WithUnmarshalerMap(ctx, inputUnmarshalMap)
 			data := ec._Mutation(ctx, rc.Operation.SelectionSet)
 			var buf bytes.Buffer
+			data.MarshalGQL(&buf)
+
+			return &graphql.Response{
+				Data: buf.Bytes(),
+			}
+		}
+	case ast.Subscription:
+		next := ec._Subscription(ctx, rc.Operation.SelectionSet)
+
+		var buf bytes.Buffer
+		return func(ctx context.Context) *graphql.Response {
+			buf.Reset()
+			data := next(ctx)
+
+			if data == nil {
+				return nil
+			}
 			data.MarshalGQL(&buf)
 
 			return &graphql.Response{
@@ -675,6 +741,8 @@ extend type Query {
 extend type Mutation {
   createConsumer(nickname: String!, form: Map!): TokenResult!
   updateConsumer(nickname: String!, form: Map!): ConsumerResult!
+  enterRoom(roomId: ID!): Boolean!
+  exitRoom(roomId: ID!): Boolean!
 }
 `, BuiltIn: false},
 	{Name: "server/schema/organizer.graphqls", Input: `type Organizer {
@@ -752,6 +820,10 @@ extend type Query {
 extend type Mutation {
   createRoom(name: String!, address: String!): RoomResult!
 }
+
+extend type Subscription {
+  consumersInRoomUpdated(roomId: ID!): Room!
+}
 `, BuiltIn: false},
 	{Name: "server/schema/viewer.graphqls", Input: `union Viewer = Organizer | Consumer
 
@@ -826,6 +898,36 @@ func (ec *executionContext) field_Mutation_createRoom_args(ctx context.Context, 
 		}
 	}
 	args["address"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_enterRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["roomId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roomId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roomId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_exitRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["roomId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roomId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roomId"] = arg0
 	return args, nil
 }
 
@@ -979,6 +1081,21 @@ func (ec *executionContext) field_Query_rooms_args(ctx context.Context, rawArgs 
 		}
 	}
 	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Subscription_consumersInRoomUpdated_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["roomId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roomId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roomId"] = arg0
 	return args, nil
 }
 
@@ -1791,6 +1908,116 @@ func (ec *executionContext) fieldContext_Mutation_updateConsumer(ctx context.Con
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_updateConsumer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_enterRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_enterRoom(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().EnterRoom(rctx, fc.Args["roomId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_enterRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_enterRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_exitRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_exitRoom(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().ExitRoom(rctx, fc.Args["roomId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_exitRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_exitRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -3383,6 +3610,83 @@ func (ec *executionContext) fieldContext_RoomResult_room(ctx context.Context, fi
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Subscription_consumersInRoomUpdated(ctx context.Context, field graphql.CollectedField) (ret func(ctx context.Context) graphql.Marshaler) {
+	fc, err := ec.fieldContext_Subscription_consumersInRoomUpdated(ctx, field)
+	if err != nil {
+		return nil
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = nil
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Subscription().ConsumersInRoomUpdated(rctx, fc.Args["roomId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return nil
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return nil
+	}
+	return func(ctx context.Context) graphql.Marshaler {
+		res, ok := <-resTmp.(<-chan *models.Room)
+		if !ok {
+			return nil
+		}
+		return graphql.WriterFunc(func(w io.Writer) {
+			w.Write([]byte{'{'})
+			graphql.MarshalString(field.Alias).MarshalGQL(w)
+			w.Write([]byte{':'})
+			ec.marshalNRoom2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoom(ctx, field.Selections, res).MarshalGQL(w)
+			w.Write([]byte{'}'})
+		})
+	}
+}
+
+func (ec *executionContext) fieldContext_Subscription_consumersInRoomUpdated(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Subscription",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Room_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
+			case "address":
+				return ec.fieldContext_Room_address(ctx, field)
+			case "organizer":
+				return ec.fieldContext_Room_organizer(ctx, field)
+			case "consumers":
+				return ec.fieldContext_Room_consumers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Subscription_consumersInRoomUpdated_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -5618,6 +5922,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "enterRoom":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_enterRoom(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "exitRoom":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_exitRoom(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createOrganizer":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -6161,6 +6483,26 @@ func (ec *executionContext) _RoomResult(ctx context.Context, sel ast.SelectionSe
 		return graphql.Null
 	}
 	return out
+}
+
+var subscriptionImplementors = []string{"Subscription"}
+
+func (ec *executionContext) _Subscription(ctx context.Context, sel ast.SelectionSet) func(ctx context.Context) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, subscriptionImplementors)
+	ctx = graphql.WithFieldContext(ctx, &graphql.FieldContext{
+		Object: "Subscription",
+	})
+	if len(fields) != 1 {
+		ec.Errorf(ctx, "must subscribe to exactly one stream")
+		return nil
+	}
+
+	switch fields[0].Name {
+	case "consumersInRoomUpdated":
+		return ec._Subscription_consumersInRoomUpdated(ctx, fields[0])
+	default:
+		panic("unknown field " + strconv.Quote(fields[0].Name))
+	}
 }
 
 var tokenResultImplementors = []string{"TokenResult"}
@@ -6903,6 +7245,10 @@ func (ec *executionContext) marshalNPageInfo2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserver�
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNRoom2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoom(ctx context.Context, sel ast.SelectionSet, v models.Room) graphql.Marshaler {
+	return ec._Room(ctx, sel, &v)
 }
 
 func (ec *executionContext) marshalNRoom2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoom(ctx context.Context, sel ast.SelectionSet, v *models.Room) graphql.Marshaler {
