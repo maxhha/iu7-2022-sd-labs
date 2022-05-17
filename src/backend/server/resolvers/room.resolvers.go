@@ -6,7 +6,6 @@ package resolvers
 import (
 	"context"
 	"iu7-2022-sd-labs/buisness/ports/bus"
-	"iu7-2022-sd-labs/buisness/ports/repositories"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
 	"iu7-2022-sd-labs/server/ports"
@@ -28,6 +27,25 @@ func (r *mutationResolver) CreateRoom(ctx context.Context, name string, address 
 	}, nil
 }
 
+func (r *mutationResolver) DeleteRoom(ctx context.Context, roomID string) (bool, error) {
+	organizer, err := ports.ForOrganizer(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	room, err := r.dataloader.LoadRoom(ctx, roomID)
+	if err != nil {
+		return false, Wrap(err, "dataloader load room")
+	}
+
+	if room.OrganizerID() != organizer.ID() {
+		return false, ErrDenied
+	}
+
+	err = r.roomInteractor.Delete(room.ID())
+	return err == nil, Wrap(err, "room interactor delete")
+}
+
 func (r *queryResolver) Rooms(ctx context.Context, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error) {
 	return r.generatedPagination__Rooms(ctx, first, after, filter)
 }
@@ -46,11 +64,7 @@ func (r *roomResolver) Consumers(ctx context.Context, obj *models.Room) ([]model
 		return nil, nil
 	}
 
-	consumers, err := r.consumerInteractor.Find(&repositories.ConsumerFindParams{
-		Filter: &repositories.ConsumerFilter{
-			IDs: obj.ConsumerIDs,
-		},
-	})
+	consumers, err := r.dataloader.LoadManyConsumers(ctx, obj.ConsumerIDs)
 	if err != nil {
 		return nil, Wrap(err, "consumer interactor find")
 	}

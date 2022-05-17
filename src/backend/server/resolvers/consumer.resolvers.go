@@ -5,11 +5,20 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 	"iu7-2022-sd-labs/buisness/ports/interactors"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
 	"iu7-2022-sd-labs/server/ports"
 )
+
+func (r *consumerResolver) Rooms(ctx context.Context, obj *models.Consumer, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error) {
+	if len(filter.Consumers) > 0 {
+		return nil, fmt.Errorf("consumers must be empty")
+	}
+	filter.Consumers = []string{obj.ID}
+	return r.generatedPagination__Rooms(ctx, first, after, filter)
+}
 
 func (r *mutationResolver) CreateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.TokenResult, error) {
 	ent, err := r.consumerInteractor.Create(nickname, form)
@@ -70,11 +79,15 @@ func (r *queryResolver) Consumers(ctx context.Context, first *int, after *string
 	return r.generatedPagination__Consumers(ctx, first, after, filter)
 }
 
+// Consumer returns generated.ConsumerResolver implementation.
+func (r *Resolver) Consumer() generated.ConsumerResolver { return &consumerResolver{r} }
+
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
 // Query returns generated.QueryResolver implementation.
 func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
 
+type consumerResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
 type queryResolver struct{ *Resolver }

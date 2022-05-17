@@ -7,7 +7,7 @@ import (
 	"iu7-2022-sd-labs/server/models"
 )
 
-func (r *queryResolver) generatedPagination__Rooms(ctx context.Context, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error) {
+func (r *Resolver) generatedPagination__Rooms(ctx context.Context, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error) {
 	ents, err := r.roomInteractor.Find(&repositories.RoomFindParams{
 		Filter: filter.Into(&repositories.RoomFilter{}),
 		Order: &repositories.RoomOrder{

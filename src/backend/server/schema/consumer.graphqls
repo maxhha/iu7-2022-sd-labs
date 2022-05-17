@@ -2,6 +2,7 @@ type Consumer {
   id: ID!
   nickname: String!
   form: Map
+  rooms(first: Int, after: ID, filter: RoomFilter): RoomConnection!
 }
 
 type ConsumerResult {

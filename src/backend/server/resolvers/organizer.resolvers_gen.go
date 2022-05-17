@@ -7,7 +7,7 @@ import (
 	"iu7-2022-sd-labs/server/models"
 )
 
-func (r *queryResolver) generatedPagination__Organizers(ctx context.Context, first *int, after *string, filter *models.OrganizerFilter) (*models.OrganizerConnection, error) {
+func (r *Resolver) generatedPagination__Organizers(ctx context.Context, first *int, after *string, filter *models.OrganizerFilter) (*models.OrganizerConnection, error) {
 	ents, err := r.organizerInteractor.Find(&repositories.OrganizerFindParams{
 		Filter: filter.Into(&repositories.OrganizerFilter{}),
 		Order: &repositories.OrganizerOrder{

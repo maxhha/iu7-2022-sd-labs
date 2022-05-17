@@ -37,6 +37,7 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Consumer() ConsumerResolver
 	Mutation() MutationResolver
 	Organizer() OrganizerResolver
 	Query() QueryResolver
@@ -64,6 +65,7 @@ type ComplexityRoot struct {
 		Form     func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Nickname func(childComplexity int) int
+		Rooms    func(childComplexity int, first *int, after *string, filter *models.RoomFilter) int
 	}
 
 	ConsumerConnection struct {
@@ -84,6 +86,7 @@ type ComplexityRoot struct {
 		CreateConsumer  func(childComplexity int, nickname string, form map[string]interface{}) int
 		CreateOrganizer func(childComplexity int, name string) int
 		CreateRoom      func(childComplexity int, name string, address string) int
+		DeleteRoom      func(childComplexity int, roomID string) int
 		EnterRoom       func(childComplexity int, roomID string) int
 		ExitRoom        func(childComplexity int, roomID string) int
 		UpdateConsumer  func(childComplexity int, nickname string, form map[string]interface{}) int
@@ -155,6 +158,9 @@ type ComplexityRoot struct {
 	}
 }
 
+type ConsumerResolver interface {
+	Rooms(ctx context.Context, obj *models.Consumer, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error)
+}
 type MutationResolver interface {
 	CreateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.TokenResult, error)
 	UpdateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.ConsumerResult, error)
@@ -163,6 +169,7 @@ type MutationResolver interface {
 	CreateOrganizer(ctx context.Context, name string) (*models.TokenResult, error)
 	UpdateOrganizer(ctx context.Context, name string) (*models.OrganizerResult, error)
 	CreateRoom(ctx context.Context, name string, address string) (*models.RoomResult, error)
+	DeleteRoom(ctx context.Context, roomID string) (bool, error)
 }
 type OrganizerResolver interface {
 	BidStepTables(ctx context.Context, obj *models.Organizer) ([]models.BidStepTable, error)
@@ -259,6 +266,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Consumer.Nickname(childComplexity), true
 
+	case "Consumer.rooms":
+		if e.complexity.Consumer.Rooms == nil {
+			break
+		}
+
+		args, err := ec.field_Consumer_rooms_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Consumer.Rooms(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.RoomFilter)), true
+
 	case "ConsumerConnection.edges":
 		if e.complexity.ConsumerConnection.Edges == nil {
 			break
@@ -329,6 +348,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateRoom(childComplexity, args["name"].(string), args["address"].(string)), true
+
+	case "Mutation.deleteRoom":
+		if e.complexity.Mutation.DeleteRoom == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteRoom_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteRoom(childComplexity, args["roomId"].(string)), true
 
 	case "Mutation.enterRoom":
 		if e.complexity.Mutation.EnterRoom == nil {
@@ -712,6 +743,7 @@ type PageInfo {
   id: ID!
   nickname: String!
   form: Map
+  rooms(first: Int, after: ID, filter: RoomFilter): RoomConnection!
 }
 
 type ConsumerResult {
@@ -819,6 +851,7 @@ extend type Query {
 
 extend type Mutation {
   createRoom(name: String!, address: String!): RoomResult!
+  deleteRoom(roomId: ID!): Boolean!
 }
 
 extend type Subscription {
@@ -837,6 +870,39 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Consumer_rooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.RoomFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalORoomFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoomFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
 
 func (ec *executionContext) field_Mutation_createConsumer_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -898,6 +964,21 @@ func (ec *executionContext) field_Mutation_createRoom_args(ctx context.Context, 
 		}
 	}
 	args["address"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["roomId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("roomId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["roomId"] = arg0
 	return args, nil
 }
 
@@ -1544,6 +1625,67 @@ func (ec *executionContext) fieldContext_Consumer_form(ctx context.Context, fiel
 	return fc, nil
 }
 
+func (ec *executionContext) _Consumer_rooms(ctx context.Context, field graphql.CollectedField, obj *models.Consumer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Consumer_rooms(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Consumer().Rooms(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.RoomFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.RoomConnection)
+	fc.Result = res
+	return ec.marshalNRoomConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoomConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Consumer_rooms(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Consumer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_RoomConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_RoomConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type RoomConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Consumer_rooms_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _ConsumerConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.ConsumerConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_ConsumerConnection_pageInfo(ctx, field)
 	if err != nil {
@@ -1737,6 +1879,8 @@ func (ec *executionContext) fieldContext_ConsumerConnectionEdge_node(ctx context
 				return ec.fieldContext_Consumer_nickname(ctx, field)
 			case "form":
 				return ec.fieldContext_Consumer_form(ctx, field)
+			case "rooms":
+				return ec.fieldContext_Consumer_rooms(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
 		},
@@ -1789,6 +1933,8 @@ func (ec *executionContext) fieldContext_ConsumerResult_consumer(ctx context.Con
 				return ec.fieldContext_Consumer_nickname(ctx, field)
 			case "form":
 				return ec.fieldContext_Consumer_form(ctx, field)
+			case "rooms":
+				return ec.fieldContext_Consumer_rooms(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
 		},
@@ -2195,6 +2341,61 @@ func (ec *executionContext) fieldContext_Mutation_createRoom(ctx context.Context
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Mutation_createRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteRoom(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteRoom(rctx, fc.Args["roomId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteRoom(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -3347,6 +3548,8 @@ func (ec *executionContext) fieldContext_Room_consumers(ctx context.Context, fie
 				return ec.fieldContext_Consumer_nickname(ctx, field)
 			case "form":
 				return ec.fieldContext_Consumer_form(ctx, field)
+			case "rooms":
+				return ec.fieldContext_Consumer_rooms(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
 		},
@@ -5763,19 +5966,39 @@ func (ec *executionContext) _Consumer(ctx context.Context, sel ast.SelectionSet,
 			out.Values[i] = ec._Consumer_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "nickname":
 
 			out.Values[i] = ec._Consumer_nickname(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "form":
 
 			out.Values[i] = ec._Consumer_form(ctx, field, obj)
 
+		case "rooms":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Consumer_rooms(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5962,6 +6185,15 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_createRoom(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteRoom":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteRoom(ctx, field)
 			})
 
 			if out.Values[i] == graphql.Null {

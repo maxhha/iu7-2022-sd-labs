@@ -8,6 +8,7 @@ import (
 	"iu7-2022-sd-labs/buisness/ports/repositories"
 
 	"github.com/graph-gophers/dataloader"
+	"github.com/hashicorp/go-multierror"
 )
 
 type contextKey struct {
@@ -190,6 +191,36 @@ func (l *DataLoader) LoadOrganizer(ctx context.Context, id string) (entities.Org
 	return ent, nil
 }
 
+func (l *DataLoader) LoadManyOrganizers(ctx context.Context, ids []string) ([]entities.Organizer, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.organizer.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("organizer loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Organizer, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Organizer)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Organizer",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
+}
+
 func (l *DataLoader) LoadRoom(ctx context.Context, id string) (entities.Room, error) {
 	loaders, ok := ctx.Value(loaderKey).(loaders)
 	if !ok {
@@ -213,6 +244,36 @@ func (l *DataLoader) LoadRoom(ctx context.Context, id string) (entities.Room, er
 	return ent, nil
 }
 
+func (l *DataLoader) LoadManyRooms(ctx context.Context, ids []string) ([]entities.Room, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.room.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("room loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Room, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Room)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Room",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
+}
+
 func (l *DataLoader) LoadConsumer(ctx context.Context, id string) (entities.Consumer, error) {
 	loaders, ok := ctx.Value(loaderKey).(loaders)
 	if !ok {
@@ -234,4 +295,34 @@ func (l *DataLoader) LoadConsumer(ctx context.Context, id string) (entities.Cons
 	}
 
 	return ent, nil
+}
+
+func (l *DataLoader) LoadManyConsumers(ctx context.Context, ids []string) ([]entities.Consumer, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.consumer.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("consumer loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Consumer, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Consumer)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Consumer",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
 }

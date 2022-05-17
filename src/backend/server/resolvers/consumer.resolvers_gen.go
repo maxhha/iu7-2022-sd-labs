@@ -7,7 +7,7 @@ import (
 	"iu7-2022-sd-labs/server/models"
 )
 
-func (r *queryResolver) generatedPagination__Consumers(ctx context.Context, first *int, after *string, filter *models.ConsumerFilter) (*models.ConsumerConnection, error) {
+func (r *Resolver) generatedPagination__Consumers(ctx context.Context, first *int, after *string, filter *models.ConsumerFilter) (*models.ConsumerConnection, error) {
 	ents, err := r.consumerInteractor.Find(&repositories.ConsumerFindParams{
 		Filter: filter.Into(&repositories.ConsumerFilter{}),
 		Order: &repositories.ConsumerOrder{

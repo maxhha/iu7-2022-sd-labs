@@ -25,6 +25,7 @@ import (
 	"iu7-2022-sd-labs/buisness/ports/repositories"
 
 	"github.com/graph-gophers/dataloader"
+	"github.com/hashicorp/go-multierror"
 )
 
 type contextKey struct {
@@ -121,6 +122,37 @@ func (l *DataLoader) Load{{ .Cap }}(ctx context.Context, id string) (entities.{{
 	}
 
 	return ent, nil
+}
+
+
+func (l *DataLoader) LoadMany{{ .Cap }}s(ctx context.Context, ids []string) ([]entities.{{ .Cap }}, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.{{ .Low }}.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("{{ .Low }} loader thunk: %w", err)
+	}
+
+	ents := make([]entities.{{ .Cap }}, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.{{ .Cap }})
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to {{ .Cap }}",
+				obj,
+			)
+		}
+		
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
 }
 {{ end }}
 `))

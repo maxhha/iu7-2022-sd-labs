@@ -34,6 +34,7 @@ extend type Query {
 
 extend type Mutation {
   createRoom(name: String!, address: String!): RoomResult!
+  deleteRoom(roomId: ID!): Boolean!
 }
 
 extend type Subscription {

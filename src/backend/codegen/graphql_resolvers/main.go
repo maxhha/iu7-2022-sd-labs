@@ -32,7 +32,7 @@ import (
 
 var resolverToTemplate = map[string]*template.Template{
 	"QueryPagination": template.Must(template.New("queryPaginaerionTemplate").Parse(`
-func (r *queryResolver) generatedPagination__{{ .Entity }}s(ctx context.Context, first *int, after *string, filter *models.{{ .Entity }}Filter) (*models.{{ .Entity }}Connection, error) {
+func (r *Resolver) generatedPagination__{{ .Entity }}s(ctx context.Context, first *int, after *string, filter *models.{{ .Entity }}Filter) (*models.{{ .Entity }}Connection, error) {
 	ents, err := r.{{ .LocalEntity }}Interactor.Find(&repositories.{{ .Entity }}FindParams{
 		Filter: filter.Into(&repositories.{{ .Entity }}Filter{}),
 		Order: &repositories.{{ .Entity }}Order{
