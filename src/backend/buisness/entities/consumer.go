@@ -10,6 +10,11 @@ func NewConsumer() Consumer {
 	return Consumer{}
 }
 
+func NewConsumerPtr() *Consumer {
+	obj := NewConsumer()
+	return &obj
+}
+
 func (obj *Consumer) ID() string {
 	return obj.id
 }

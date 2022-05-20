@@ -10,6 +10,11 @@ func NewProduct() Product {
 	return Product{}
 }
 
+func NewProductPtr() *Product {
+	obj := NewProduct()
+	return &obj
+}
+
 func (obj *Product) ID() string {
 	return obj.id
 }

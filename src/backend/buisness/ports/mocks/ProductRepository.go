@@ -96,6 +96,27 @@ func (_m *ProductRepository) Get(id string) (entities.Product, error) {
 	return r0, r1
 }
 
+// ShareLock provides a mock function with given fields: id
+func (_m *ProductRepository) ShareLock(id string) (entities.Product, error) {
+	ret := _m.Called(id)
+
+	var r0 entities.Product
+	if rf, ok := ret.Get(0).(func(string) entities.Product); ok {
+		r0 = rf(id)
+	} else {
+		r0 = ret.Get(0).(entities.Product)
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(string) error); ok {
+		r1 = rf(id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
 // Update provides a mock function with given fields: id, updateFn
 func (_m *ProductRepository) Update(id string, updateFn func(*entities.Product) error) (entities.Product, error) {
 	ret := _m.Called(id, updateFn)

@@ -23,13 +23,13 @@ func TestRoomSuite(t *testing.T) {
 func (s *RoomSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
-	s.interactor = NewRoomInteractor(s.organizerRepo, s.roomRepo)
+	s.interactor = NewRoomInteractor(s.repo.OrganizerMock, s.repo.RoomMock)
 }
 
 func (s *RoomSuite) TestCreate() {
 	roomID := "test-room"
 	organizerID := "test-organizer"
-	organizer := *s.NewOrganizerPtr().SetID(organizerID)
+	organizer := *entities.NewOrganizerPtr().SetID(organizerID)
 	name := "test-name"
 	address := "test-address"
 
@@ -43,7 +43,7 @@ func (s *RoomSuite) TestCreate() {
 	cases := []Case{{
 		"Case: fail get organizer",
 		func(c *Case) {
-			s.organizerRepo.On("Get", organizerID).
+			s.repo.OrganizerMock.On("Get", organizerID).
 				Return(entities.Organizer{}, repositories.ErrNotFound).
 				Once()
 		},
@@ -52,18 +52,18 @@ func (s *RoomSuite) TestCreate() {
 	}, {
 		"Case: success",
 		func(c *Case) {
-			s.organizerRepo.On("Get", organizerID).
+			s.repo.OrganizerMock.On("Get", organizerID).
 				Return(organizer, nil).
 				Once()
 
-			s.roomRepo.On("Create", mock.Anything).
+			s.repo.RoomMock.On("Create", mock.Anything).
 				Return(func(room *entities.Room) error {
 					room.SetID(roomID)
 					return nil
 				}).
 				Once()
 		},
-		*s.NewRoomPtr().
+		*entities.NewRoomPtr().
 			SetID(roomID).
 			SetOrganizerID(organizerID).
 			SetName(name).
@@ -92,7 +92,7 @@ func (s *RoomSuite) TestFind() {
 	}
 
 	params := repositories.RoomFindParams{}
-	s.roomRepo.On("Find", &params).Return(rooms, nil)
+	s.repo.RoomMock.On("Find", &params).Return(rooms, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -101,7 +101,7 @@ func (s *RoomSuite) TestFind() {
 
 func (s *RoomSuite) TestDelete() {
 	id := "test-room"
-	s.roomRepo.On("Delete", id).Return(entities.Room{}, nil)
+	s.repo.RoomMock.On("Delete", id).Return(entities.Room{}, nil)
 
 	err := s.interactor.Delete(id)
 	require.NoError(s.T(), err)

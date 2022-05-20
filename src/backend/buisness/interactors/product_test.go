@@ -24,7 +24,10 @@ func TestProductSuite(t *testing.T) {
 func (s *ProductSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
-	s.interactor = NewProductInteractor(s.organizerRepo, s.productRepo)
+	s.interactor = NewProductInteractor(
+		s.repo.OrganizerMock,
+		s.repo.ProductMock,
+	)
 }
 
 func (s *ProductSuite) TestCreate() {
@@ -41,12 +44,12 @@ func (s *ProductSuite) TestCreate() {
 		{
 			"No organizer",
 			func() {
-				s.organizerRepo.
+				s.repo.OrganizerMock.
 					On("Get", organizerID).
 					Return(entities.Organizer{}, repositories.ErrNotFound).
 					Once()
 			},
-			*s.NewProductPtr(),
+			*entities.NewProductPtr(),
 			repositories.ErrNotFound,
 		},
 		{
@@ -54,17 +57,17 @@ func (s *ProductSuite) TestCreate() {
 			func() {
 				org := entities.NewOrganizer()
 				org.SetID(organizerID)
-				s.organizerRepo.
+				s.repo.OrganizerMock.
 					On("Get", organizerID).
 					Return(org, nil).
 					Once()
 
-				expectedProduct := s.
+				expectedProduct := entities.
 					NewProductPtr().
 					SetOrganizerID(organizerID).
 					SetName(name)
 
-				s.productRepo.
+				s.repo.ProductMock.
 					On("Create", expectedProduct).
 					Run(func(args mock.Arguments) {
 						p, ok := args.Get(0).(*entities.Product)
@@ -74,7 +77,7 @@ func (s *ProductSuite) TestCreate() {
 					Return(nil).
 					Once()
 			},
-			*s.NewProductPtr().
+			*entities.NewProductPtr().
 				SetOrganizerID(organizerID).
 				SetName(name).
 				SetID(productID),
@@ -103,7 +106,7 @@ func (s *ProductSuite) TestFind() {
 	}
 
 	params := repositories.ProductFindParams{}
-	s.productRepo.On("Find", &params).Return(products, nil)
+	s.repo.ProductMock.On("Find", &params).Return(products, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -113,9 +116,9 @@ func (s *ProductSuite) TestFind() {
 func (s *ProductSuite) TestUpdate() {
 	id := "test-product"
 	name := "product-name"
-	expectedProduct := *s.NewProductPtr().SetID(id).SetName(name)
+	expectedProduct := *entities.NewProductPtr().SetID(id).SetName(name)
 
-	s.productRepo.
+	s.repo.ProductMock.
 		On("Update", id, mock.Anything).
 		Run(func(args mock.Arguments) {
 			updateFn, ok := args.Get(1).(func(product *entities.Product) error)
@@ -138,7 +141,7 @@ func (s *ProductSuite) TestUpdate() {
 
 func (s *ProductSuite) TestDelete() {
 	id := "test-product"
-	s.productRepo.On("Delete", id).Return(entities.Product{}, nil)
+	s.repo.ProductMock.On("Delete", id).Return(entities.Product{}, nil)
 
 	err := s.interactor.Delete(id)
 	require.NoError(s.T(), err)

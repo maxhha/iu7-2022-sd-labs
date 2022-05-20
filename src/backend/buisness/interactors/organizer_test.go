@@ -24,14 +24,14 @@ func TestOrganizerSuite(t *testing.T) {
 func (s *OrganizerSuite) SetupTest() {
 	s.InteractorSuite.SetupTest()
 
-	s.interactor = NewOrganizerInteractor(s.organizerRepo)
+	s.interactor = NewOrganizerInteractor(s.repo.OrganizerMock)
 }
 
 func (s *OrganizerSuite) TestCreate() {
 	name := "user-name"
 	id := "user-id"
 
-	s.organizerRepo.On("Create", mock.Anything).Run(func(args mock.Arguments) {
+	s.repo.OrganizerMock.On("Create", mock.Anything).Run(func(args mock.Arguments) {
 		org, ok := args.Get(0).(*entities.Organizer)
 		require.True(s.T(), ok)
 		org.SetID(id)
@@ -51,7 +51,7 @@ func (s *OrganizerSuite) TestFind() {
 	}
 
 	params := repositories.OrganizerFindParams{}
-	s.organizerRepo.On("Find", &params).Return(orgs, nil)
+	s.repo.OrganizerMock.On("Find", &params).Return(orgs, nil)
 
 	result, err := s.interactor.Find(&params)
 	require.NoError(s.T(), err)
@@ -71,7 +71,7 @@ func (s *OrganizerSuite) TestUpdate() {
 		{
 			"Get error",
 			func() {
-				s.organizerRepo.On("Get", id).
+				s.repo.OrganizerMock.On("Get", id).
 					Return(entities.Organizer{}, repositories.ErrNotFound).
 					Once()
 			},
@@ -83,16 +83,16 @@ func (s *OrganizerSuite) TestUpdate() {
 			func() {
 				org := entities.NewOrganizer()
 				org.SetID(id)
-				s.organizerRepo.On("Get", id).
+				s.repo.OrganizerMock.On("Get", id).
 					Return(org, nil).
 					Once()
 
 				org.SetName(newName)
 
-				s.organizerRepo.On("Update", &org).
+				s.repo.OrganizerMock.On("Update", &org).
 					Return(nil)
 			},
-			*s.NewOrganizerPtr().SetID(id).SetName(newName),
+			*entities.NewOrganizerPtr().SetID(id).SetName(newName),
 			nil,
 		},
 	}

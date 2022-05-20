@@ -9,6 +9,11 @@ func NewOrganizer() Organizer {
 	return Organizer{}
 }
 
+func NewOrganizerPtr() *Organizer {
+	obj := NewOrganizer()
+	return &obj
+}
+
 func (obj *Organizer) ID() string {
 	return obj.id
 }

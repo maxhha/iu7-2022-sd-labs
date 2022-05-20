@@ -18,6 +18,11 @@ func NewOffer() Offer {
 	return Offer{}
 }
 
+func NewOfferPtr() *Offer {
+	obj := NewOffer()
+	return &obj
+}
+
 func (obj *Offer) ID() string {
 	return obj.id
 }
@@ -50,7 +55,11 @@ func (obj *Offer) Amount() decimal.Decimal {
 }
 
 func (obj *Offer) SetAmount(amount decimal.Decimal) *Offer {
-	obj.amount = amount
+	if amount.IsZero() {
+		obj.amount = decimal.Decimal{}
+	} else {
+		obj.amount = amount
+	}
 	return obj
 }
 

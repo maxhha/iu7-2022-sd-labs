@@ -15,6 +15,16 @@ tasks:
     sources:
       - buisness/ports/**/*.go
 
+  gen:gorm:
+    desc: Generates gorm repositories
+    cmds:
+      - go generate -run "/codegen/gorm_repository/main.go" ./...
+    sources:
+      - adapters/gorm_repositories/*.go
+      - codegen/gorm_repository/*
+    generates:
+      - adapters/gorm_repositories/*_gen.go
+
   test:
     desc: Run test with colorful output
     deps:

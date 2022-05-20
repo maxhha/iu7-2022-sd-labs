@@ -10,21 +10,18 @@ import (
 )
 
 type ConsumerInteractor struct {
-	consumerRepo     repositories.ConsumerRepository
-	roomRepo         repositories.RoomRepository
+	repo             repositories.Repository
 	eventBus         bus.EventBus
 	validatorService services.ConsumerFormValidatorService
 }
 
 func NewConsumerInteractor(
-	consumerRepo repositories.ConsumerRepository,
-	roomRepo repositories.RoomRepository,
+	repo repositories.Repository,
 	eventBus bus.EventBus,
 	validatorService services.ConsumerFormValidatorService,
 ) ConsumerInteractor {
 	return ConsumerInteractor{
-		consumerRepo,
-		roomRepo,
+		repo,
 		eventBus,
 		validatorService,
 	}
@@ -44,21 +41,21 @@ func (interactor *ConsumerInteractor) Create(
 		SetNickname(nickname).
 		SetForm(form)
 
-	err := interactor.consumerRepo.Create(&consumer)
+	err := interactor.repo.Consumer().Create(&consumer)
 	return consumer, errors.Wrap(err, "consumer repo create")
 }
 
 func (interactor *ConsumerInteractor) Find(
 	params *repositories.ConsumerFindParams,
 ) ([]entities.Consumer, error) {
-	consumers, err := interactor.consumerRepo.Find(params)
+	consumers, err := interactor.repo.Consumer().Find(params)
 	return consumers, errors.Wrap(err, "consumer repo find")
 }
 
 func (interactor *ConsumerInteractor) Update(
 	params *interactors.ConsumerUpdateParams,
 ) (entities.Consumer, error) {
-	consumer, err := interactor.consumerRepo.Get(params.ID)
+	consumer, err := interactor.repo.Consumer().Get(params.ID)
 	if err != nil {
 		return consumer, errors.Wrap(err, "consumer repo get")
 	}
@@ -71,7 +68,7 @@ func (interactor *ConsumerInteractor) Update(
 		SetNickname(params.Nickname).
 		SetForm(params.Form)
 
-	err = interactor.consumerRepo.Update(&consumer)
+	err = interactor.repo.Consumer().Update(&consumer)
 
 	return consumer, errors.Wrap(err, "consumer repo update")
 }
@@ -80,12 +77,12 @@ func (interactor *ConsumerInteractor) EnterRoom(
 	consumerID string,
 	roomID string,
 ) error {
-	consumer, err := interactor.consumerRepo.Get(consumerID)
+	consumer, err := interactor.repo.Consumer().Get(consumerID)
 	if err != nil {
 		return errors.Wrap(err, "consumer repo get")
 	}
 
-	room, err := interactor.roomRepo.Update(roomID, func(room *entities.Room) error {
+	room, err := interactor.repo.Room().Update(roomID, func(room *entities.Room) error {
 		err := room.AddConsumerID(consumer.ID())
 		return errors.Wrap(err, "room add consumer id")
 	})
@@ -107,12 +104,12 @@ func (interactor *ConsumerInteractor) ExitRoom(
 	consumerID string,
 	roomID string,
 ) error {
-	consumer, err := interactor.consumerRepo.Get(consumerID)
+	consumer, err := interactor.repo.Consumer().Get(consumerID)
 	if err != nil {
 		return errors.Wrap(err, "consumer repo get")
 	}
 
-	room, err := interactor.roomRepo.Update(roomID, func(room *entities.Room) error {
+	room, err := interactor.repo.Room().Update(roomID, func(room *entities.Room) error {
 		err := room.RemoveConsumerID(consumer.ID())
 		return errors.Wrap(err, "room remove consumer id")
 	})

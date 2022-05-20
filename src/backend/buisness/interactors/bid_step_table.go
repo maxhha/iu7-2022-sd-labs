@@ -8,15 +8,13 @@ import (
 )
 
 type BidStepTableInteractor struct {
-	organizerRepo repositories.OrganizerRepository
-	tableRepo     repositories.BidStepTableRepository
+	repo repositories.Repository
 }
 
 func NewBidStepTableInteractor(
-	organizerRepo repositories.OrganizerRepository,
-	tableRepo repositories.BidStepTableRepository,
+	repo repositories.Repository,
 ) BidStepTableInteractor {
-	return BidStepTableInteractor{organizerRepo, tableRepo}
+	return BidStepTableInteractor{repo}
 }
 
 func (interactor *BidStepTableInteractor) bidStepRowsToEntities(
@@ -36,7 +34,7 @@ func (interactor *BidStepTableInteractor) bidStepRowsToEntities(
 func (interactor *BidStepTableInteractor) Create(
 	params *interactors.BidStepTableCreateParams,
 ) (entities.BidStepTable, error) {
-	org, err := interactor.organizerRepo.Get(params.OrganizerID)
+	org, err := interactor.repo.Organizer().Get(params.OrganizerID)
 	if err != nil {
 		return entities.BidStepTable{}, errors.Wrap(err, "organizer repo get")
 	}
@@ -47,39 +45,29 @@ func (interactor *BidStepTableInteractor) Create(
 		SetName(params.Name).
 		SetRows(rows)
 
-	if err = table.Validate(); err != nil {
-		return table, errors.Wrap(err, "validate")
-	}
-
-	err = interactor.tableRepo.Create(&table)
+	err = interactor.repo.BidStepTable().Create(&table)
 	return table, errors.Wrap(err, "table repo create")
 }
 
 func (interactor *BidStepTableInteractor) Find(
 	params *repositories.BidStepTableFindParams,
 ) ([]entities.BidStepTable, error) {
-	tables, err := interactor.tableRepo.Find(params)
+	tables, err := interactor.repo.BidStepTable().Find(params)
 	return tables, errors.Wrap(err, "table repo find")
 }
 
 func (interactor *BidStepTableInteractor) Update(
 	params *interactors.BidStepTableUpdateParams,
 ) (entities.BidStepTable, error) {
-	table, err := interactor.tableRepo.Get(params.ID)
-	if err != nil {
-		return table, errors.Wrap(err, "table repo get")
-	}
-
 	rows := interactor.bidStepRowsToEntities(params.Rows)
-	table.
-		SetName(params.Name).
-		SetRows(rows)
 
-	if err = table.Validate(); err != nil {
-		return table, errors.Wrap(err, "validate")
-	}
+	table, err := interactor.repo.BidStepTable().Update(params.ID, func(table *entities.BidStepTable) error {
+		table.
+			SetName(params.Name).
+			SetRows(rows)
 
-	err = interactor.tableRepo.Update(&table)
+		return nil
+	})
 
 	return table, errors.Wrap(err, "table repo update")
 }

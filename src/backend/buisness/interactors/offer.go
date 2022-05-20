@@ -10,34 +10,25 @@ import (
 )
 
 type OfferInteractor struct {
-	consumerRepo repositories.ConsumerRepository
-	tableRepo    repositories.BidStepTableRepository
-	offerRepo    repositories.OfferRepository
-	auctionRepo  repositories.AuctionRepository
-	eventBus     bus.EventBus
-	payService   services.OfferPayService
+	repo       repositories.Repository
+	eventBus   bus.EventBus
+	payService services.OfferPayService
 }
 
 func NewOfferInteractor(
-	consumerRepo repositories.ConsumerRepository,
-	tableRepo repositories.BidStepTableRepository,
-	offerRepo repositories.OfferRepository,
-	auctionRepo repositories.AuctionRepository,
+	repo repositories.Repository,
 	eventBus bus.EventBus,
 	payService services.OfferPayService,
 ) OfferInteractor {
 	return OfferInteractor{
-		consumerRepo,
-		tableRepo,
-		offerRepo,
-		auctionRepo,
+		repo,
 		eventBus,
 		payService,
 	}
 }
 
-func (interactor *OfferInteractor) getMaxOffer(auctionID string) (entities.Offer, error) {
-	maxOffer, err := interactor.offerRepo.Find(&repositories.OfferFindParams{
+func (interactor *OfferInteractor) getMaxOffer(tx repositories.Repository, auctionID string) (entities.Offer, error) {
+	maxOffer, err := tx.Offer().Find(&repositories.OfferFindParams{
 		Filter: &repositories.OfferFilter{
 			AuctionIDs: []string{auctionID},
 		},
@@ -64,18 +55,23 @@ func (interactor *OfferInteractor) Create(
 	params *interactors.OfferCreateParams,
 ) (entities.Offer, error) {
 	var offer entities.Offer
-	consumer, err := interactor.consumerRepo.Get(params.ConsumerID)
+	consumer, err := interactor.repo.Consumer().Get(params.ConsumerID)
 	if err != nil {
 		return offer, errors.Wrap(err, "consumer repo get")
 	}
 
-	_, err = interactor.auctionRepo.Update(params.AuctionID, func(auction *entities.Auction) error {
-		table, err := interactor.tableRepo.Get(auction.BidStepTableID())
+	err = interactor.repo.Atomic(func(tx repositories.Repository) error {
+		auction, err := tx.Auction().Lock(params.AuctionID)
+		if err != nil {
+			return errors.Wrap(err, "auction repo lock")
+		}
+
+		table, err := interactor.repo.BidStepTable().Get(auction.BidStepTableID())
 		if err != nil {
 			return errors.Wrap(err, "table repo get")
 		}
 
-		maxOffer, err := interactor.getMaxOffer(auction.ID())
+		maxOffer, err := interactor.getMaxOffer(tx, auction.ID())
 		if err == nil {
 			err := table.IsAllowedBid(maxOffer.Amount(), params.Amount)
 			if err != nil {
@@ -100,13 +96,13 @@ func (interactor *OfferInteractor) Create(
 			SetAuctionID(auction.ID()).
 			SetAmount(params.Amount)
 
-		err = interactor.offerRepo.Create(&offer)
+		err = tx.Offer().Create(&offer)
 
 		return errors.Wrap(err, "offer repo create")
 	})
 
 	if err != nil {
-		return offer, errors.Wrap(err, "auction repo update")
+		return offer, errors.Wrap(err, "repo atomic")
 	}
 
 	interactor.eventBus.Notify(&bus.EvtOfferCreated{
@@ -119,17 +115,17 @@ func (interactor *OfferInteractor) Create(
 func (interactor *OfferInteractor) Find(
 	params *repositories.OfferFindParams,
 ) ([]entities.Offer, error) {
-	offers, err := interactor.offerRepo.Find(params)
+	offers, err := interactor.repo.Offer().Find(params)
 	return offers, errors.Wrap(err, "offer repo find")
 }
 
 func (interactor *OfferInteractor) Pay(id string) (string, error) {
-	offer, err := interactor.offerRepo.Get(id)
+	offer, err := interactor.repo.Offer().Get(id)
 	if err != nil {
 		return "", errors.Wrap(err, "offer repo get")
 	}
 
-	maxOffer, err := interactor.getMaxOffer(offer.AuctionID())
+	maxOffer, err := interactor.getMaxOffer(interactor.repo, offer.AuctionID())
 	if err != nil {
 		return "", errors.Wrap(err, "get max offer")
 	}

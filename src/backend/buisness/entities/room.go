@@ -14,6 +14,11 @@ func NewRoom() Room {
 	return Room{}
 }
 
+func NewRoomPtr() *Room {
+	obj := NewRoom()
+	return &obj
+}
+
 func (obj *Room) ID() string {
 	return obj.id
 }

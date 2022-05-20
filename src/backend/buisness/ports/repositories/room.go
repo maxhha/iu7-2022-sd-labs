@@ -11,9 +11,11 @@ const (
 )
 
 type RoomFilter struct {
-	IDs          []string
-	NameQuery    string
-	AddressQuery string
+	IDs                []string
+	OrganizerIDs       []string
+	ConsumerEnteredIDs []string
+	NameQuery          string
+	AddressQuery       string
 }
 
 type RoomOrder struct {
@@ -31,6 +33,6 @@ type RoomRepository interface {
 	Get(id string) (entities.Room, error)
 	Find(params *RoomFindParams) ([]entities.Room, error)
 	Create(room *entities.Room) error
-	Update(id string, updateFn func(product *entities.Room) error) (entities.Room, error)
+	Update(id string, updateFn func(room *entities.Room) error) (entities.Room, error)
 	Delete(id string) (entities.Room, error)
 }
