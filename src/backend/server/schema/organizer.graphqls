@@ -2,6 +2,7 @@ type Organizer {
   id: ID!
   name: String!
   bidStepTables: [BidStepTable!]!
+  products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
 }
 
 type OrganizerResult {

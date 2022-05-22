@@ -3,6 +3,7 @@ type Consumer {
   nickname: String!
   form: Map
   rooms(first: Int, after: ID, filter: RoomFilter): RoomConnection!
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
 }
 
 type ConsumerResult {

@@ -4,6 +4,7 @@ type Room {
   address: String!
   organizer: Organizer!
   consumers: [Consumer!]!
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
 }
 
 type RoomResult {

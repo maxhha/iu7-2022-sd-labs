@@ -37,9 +37,14 @@ type Config struct {
 }
 
 type ResolverRoot interface {
+	Auction() AuctionResolver
+	BidStepRow() BidStepRowResolver
+	BidStepTable() BidStepTableResolver
 	Consumer() ConsumerResolver
 	Mutation() MutationResolver
+	Offer() OfferResolver
 	Organizer() OrganizerResolver
+	Product() ProductResolver
 	Query() QueryResolver
 	Room() RoomResolver
 	Subscription() SubscriptionResolver
@@ -49,6 +54,31 @@ type DirectiveRoot struct {
 }
 
 type ComplexityRoot struct {
+	Auction struct {
+		BidStepTable func(childComplexity int) int
+		FinishedAt   func(childComplexity int) int
+		ID           func(childComplexity int) int
+		MinAmount    func(childComplexity int) int
+		Offers       func(childComplexity int, first *int, after *string, filter *models.OfferFilter) int
+		Product      func(childComplexity int) int
+		Room         func(childComplexity int) int
+		StartedAt    func(childComplexity int) int
+	}
+
+	AuctionConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	AuctionConnectionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	AuctionResult struct {
+		Auction func(childComplexity int) int
+	}
+
 	BidStepRow struct {
 		FromAmount func(childComplexity int) int
 		Step       func(childComplexity int) int
@@ -61,10 +91,25 @@ type ComplexityRoot struct {
 		Rows      func(childComplexity int) int
 	}
 
+	BidStepTableConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	BidStepTableConnectionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	BidStepTableResult struct {
+		BidStepTable func(childComplexity int) int
+	}
+
 	Consumer struct {
 		Form     func(childComplexity int) int
 		ID       func(childComplexity int) int
 		Nickname func(childComplexity int) int
+		Offers   func(childComplexity int, first *int, after *string, filter *models.OfferFilter) int
 		Rooms    func(childComplexity int, first *int, after *string, filter *models.RoomFilter) int
 	}
 
@@ -85,18 +130,44 @@ type ComplexityRoot struct {
 	Mutation struct {
 		CreateConsumer  func(childComplexity int, nickname string, form map[string]interface{}) int
 		CreateOrganizer func(childComplexity int, name string) int
+		CreateProduct   func(childComplexity int, name string) int
 		CreateRoom      func(childComplexity int, name string, address string) int
+		DeleteProduct   func(childComplexity int, productID string) int
 		DeleteRoom      func(childComplexity int, roomID string) int
 		EnterRoom       func(childComplexity int, roomID string) int
 		ExitRoom        func(childComplexity int, roomID string) int
 		UpdateConsumer  func(childComplexity int, nickname string, form map[string]interface{}) int
 		UpdateOrganizer func(childComplexity int, name string) int
+		UpdateProduct   func(childComplexity int, input models.UpdateProductInput) int
+	}
+
+	Offer struct {
+		Amount    func(childComplexity int) int
+		Auction   func(childComplexity int) int
+		Consumer  func(childComplexity int) int
+		CreatedAt func(childComplexity int) int
+		ID        func(childComplexity int) int
+	}
+
+	OfferConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	OfferConnectionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	OfferResult struct {
+		Offer func(childComplexity int) int
 	}
 
 	Organizer struct {
 		BidStepTables func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Name          func(childComplexity int) int
+		Products      func(childComplexity int, first *int, after *string, filter *models.ProductFilter) int
 	}
 
 	OrganizerConnection struct {
@@ -120,15 +191,41 @@ type ComplexityRoot struct {
 		StartCursor     func(childComplexity int) int
 	}
 
+	Product struct {
+		Auctions  func(childComplexity int, first *int, after *string, filter *models.AuctionFilter) int
+		ID        func(childComplexity int) int
+		Name      func(childComplexity int) int
+		Organizer func(childComplexity int) int
+	}
+
+	ProductConnection struct {
+		Edges    func(childComplexity int) int
+		PageInfo func(childComplexity int) int
+	}
+
+	ProductConnectionEdge struct {
+		Cursor func(childComplexity int) int
+		Node   func(childComplexity int) int
+	}
+
+	ProductResult struct {
+		Product func(childComplexity int) int
+	}
+
 	Query struct {
-		Consumers  func(childComplexity int, first *int, after *string, filter *models.ConsumerFilter) int
-		Organizers func(childComplexity int, first *int, after *string, filter *models.OrganizerFilter) int
-		Rooms      func(childComplexity int, first *int, after *string, filter *models.RoomFilter) int
-		Viewer     func(childComplexity int) int
+		Auctions      func(childComplexity int, first *int, after *string, filter *models.AuctionFilter) int
+		BidStepTables func(childComplexity int, first *int, after *string, filter *models.BidStepTableFilter) int
+		Consumers     func(childComplexity int, first *int, after *string, filter *models.ConsumerFilter) int
+		Offers        func(childComplexity int, first *int, after *string, filter *models.OfferFilter) int
+		Organizers    func(childComplexity int, first *int, after *string, filter *models.OrganizerFilter) int
+		Products      func(childComplexity int, first *int, after *string, filter *models.ProductFilter) int
+		Rooms         func(childComplexity int, first *int, after *string, filter *models.RoomFilter) int
+		Viewer        func(childComplexity int) int
 	}
 
 	Room struct {
 		Address   func(childComplexity int) int
+		Auctions  func(childComplexity int, first *int, after *string, filter *models.AuctionFilter) int
 		Consumers func(childComplexity int) int
 		ID        func(childComplexity int) int
 		Name      func(childComplexity int) int
@@ -158,8 +255,25 @@ type ComplexityRoot struct {
 	}
 }
 
+type AuctionResolver interface {
+	Room(ctx context.Context, obj *models.Auction) (*models.Room, error)
+	Product(ctx context.Context, obj *models.Auction) (*models.Product, error)
+	BidStepTable(ctx context.Context, obj *models.Auction) (*models.BidStepTable, error)
+	MinAmount(ctx context.Context, obj *models.Auction) (*float64, error)
+	StartedAt(ctx context.Context, obj *models.Auction) (string, error)
+	FinishedAt(ctx context.Context, obj *models.Auction) (*string, error)
+	Offers(ctx context.Context, obj *models.Auction, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error)
+}
+type BidStepRowResolver interface {
+	FromAmount(ctx context.Context, obj *models.BidStepRow) (float64, error)
+	Step(ctx context.Context, obj *models.BidStepRow) (float64, error)
+}
+type BidStepTableResolver interface {
+	Organizer(ctx context.Context, obj *models.BidStepTable) (*models.Organizer, error)
+}
 type ConsumerResolver interface {
 	Rooms(ctx context.Context, obj *models.Consumer, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error)
+	Offers(ctx context.Context, obj *models.Consumer, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error)
 }
 type MutationResolver interface {
 	CreateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.TokenResult, error)
@@ -168,21 +282,40 @@ type MutationResolver interface {
 	ExitRoom(ctx context.Context, roomID string) (bool, error)
 	CreateOrganizer(ctx context.Context, name string) (*models.TokenResult, error)
 	UpdateOrganizer(ctx context.Context, name string) (*models.OrganizerResult, error)
+	CreateProduct(ctx context.Context, name string) (*models.ProductResult, error)
+	DeleteProduct(ctx context.Context, productID string) (bool, error)
+	UpdateProduct(ctx context.Context, input models.UpdateProductInput) (*models.ProductResult, error)
 	CreateRoom(ctx context.Context, name string, address string) (*models.RoomResult, error)
 	DeleteRoom(ctx context.Context, roomID string) (bool, error)
 }
+type OfferResolver interface {
+	Consumer(ctx context.Context, obj *models.Offer) (*models.Consumer, error)
+	Auction(ctx context.Context, obj *models.Offer) (*models.Auction, error)
+	Amount(ctx context.Context, obj *models.Offer) (float64, error)
+	CreatedAt(ctx context.Context, obj *models.Offer) (string, error)
+}
 type OrganizerResolver interface {
 	BidStepTables(ctx context.Context, obj *models.Organizer) ([]models.BidStepTable, error)
+	Products(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error)
+}
+type ProductResolver interface {
+	Organizer(ctx context.Context, obj *models.Product) (*models.Organizer, error)
+	Auctions(ctx context.Context, obj *models.Product, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error)
 }
 type QueryResolver interface {
+	Auctions(ctx context.Context, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error)
+	BidStepTables(ctx context.Context, first *int, after *string, filter *models.BidStepTableFilter) (*models.BidStepTableConnection, error)
 	Consumers(ctx context.Context, first *int, after *string, filter *models.ConsumerFilter) (*models.ConsumerConnection, error)
+	Offers(ctx context.Context, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error)
 	Organizers(ctx context.Context, first *int, after *string, filter *models.OrganizerFilter) (*models.OrganizerConnection, error)
+	Products(ctx context.Context, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error)
 	Rooms(ctx context.Context, first *int, after *string, filter *models.RoomFilter) (*models.RoomConnection, error)
 	Viewer(ctx context.Context) (models.Viewer, error)
 }
 type RoomResolver interface {
 	Organizer(ctx context.Context, obj *models.Room) (*models.Organizer, error)
 	Consumers(ctx context.Context, obj *models.Room) ([]models.Consumer, error)
+	Auctions(ctx context.Context, obj *models.Room, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error)
 }
 type SubscriptionResolver interface {
 	ConsumersInRoomUpdated(ctx context.Context, roomID string) (<-chan *models.Room, error)
@@ -202,6 +335,102 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 	ec := executionContext{nil, e}
 	_ = ec
 	switch typeName + "." + field {
+
+	case "Auction.bidStepTable":
+		if e.complexity.Auction.BidStepTable == nil {
+			break
+		}
+
+		return e.complexity.Auction.BidStepTable(childComplexity), true
+
+	case "Auction.finishedAt":
+		if e.complexity.Auction.FinishedAt == nil {
+			break
+		}
+
+		return e.complexity.Auction.FinishedAt(childComplexity), true
+
+	case "Auction.id":
+		if e.complexity.Auction.ID == nil {
+			break
+		}
+
+		return e.complexity.Auction.ID(childComplexity), true
+
+	case "Auction.minAmount":
+		if e.complexity.Auction.MinAmount == nil {
+			break
+		}
+
+		return e.complexity.Auction.MinAmount(childComplexity), true
+
+	case "Auction.offers":
+		if e.complexity.Auction.Offers == nil {
+			break
+		}
+
+		args, err := ec.field_Auction_offers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Auction.Offers(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.OfferFilter)), true
+
+	case "Auction.product":
+		if e.complexity.Auction.Product == nil {
+			break
+		}
+
+		return e.complexity.Auction.Product(childComplexity), true
+
+	case "Auction.room":
+		if e.complexity.Auction.Room == nil {
+			break
+		}
+
+		return e.complexity.Auction.Room(childComplexity), true
+
+	case "Auction.startedAt":
+		if e.complexity.Auction.StartedAt == nil {
+			break
+		}
+
+		return e.complexity.Auction.StartedAt(childComplexity), true
+
+	case "AuctionConnection.edges":
+		if e.complexity.AuctionConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.AuctionConnection.Edges(childComplexity), true
+
+	case "AuctionConnection.pageInfo":
+		if e.complexity.AuctionConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.AuctionConnection.PageInfo(childComplexity), true
+
+	case "AuctionConnectionEdge.cursor":
+		if e.complexity.AuctionConnectionEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.AuctionConnectionEdge.Cursor(childComplexity), true
+
+	case "AuctionConnectionEdge.node":
+		if e.complexity.AuctionConnectionEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.AuctionConnectionEdge.Node(childComplexity), true
+
+	case "AuctionResult.auction":
+		if e.complexity.AuctionResult.Auction == nil {
+			break
+		}
+
+		return e.complexity.AuctionResult.Auction(childComplexity), true
 
 	case "BidStepRow.fromAmount":
 		if e.complexity.BidStepRow.FromAmount == nil {
@@ -245,6 +474,41 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.BidStepTable.Rows(childComplexity), true
 
+	case "BidStepTableConnection.edges":
+		if e.complexity.BidStepTableConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.BidStepTableConnection.Edges(childComplexity), true
+
+	case "BidStepTableConnection.pageInfo":
+		if e.complexity.BidStepTableConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.BidStepTableConnection.PageInfo(childComplexity), true
+
+	case "BidStepTableConnectionEdge.cursor":
+		if e.complexity.BidStepTableConnectionEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.BidStepTableConnectionEdge.Cursor(childComplexity), true
+
+	case "BidStepTableConnectionEdge.node":
+		if e.complexity.BidStepTableConnectionEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.BidStepTableConnectionEdge.Node(childComplexity), true
+
+	case "BidStepTableResult.bidStepTable":
+		if e.complexity.BidStepTableResult.BidStepTable == nil {
+			break
+		}
+
+		return e.complexity.BidStepTableResult.BidStepTable(childComplexity), true
+
 	case "Consumer.form":
 		if e.complexity.Consumer.Form == nil {
 			break
@@ -265,6 +529,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Consumer.Nickname(childComplexity), true
+
+	case "Consumer.offers":
+		if e.complexity.Consumer.Offers == nil {
+			break
+		}
+
+		args, err := ec.field_Consumer_offers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Consumer.Offers(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.OfferFilter)), true
 
 	case "Consumer.rooms":
 		if e.complexity.Consumer.Rooms == nil {
@@ -337,6 +613,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.CreateOrganizer(childComplexity, args["name"].(string)), true
 
+	case "Mutation.createProduct":
+		if e.complexity.Mutation.CreateProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_createProduct_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.CreateProduct(childComplexity, args["name"].(string)), true
+
 	case "Mutation.createRoom":
 		if e.complexity.Mutation.CreateRoom == nil {
 			break
@@ -348,6 +636,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Mutation.CreateRoom(childComplexity, args["name"].(string), args["address"].(string)), true
+
+	case "Mutation.deleteProduct":
+		if e.complexity.Mutation.DeleteProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_deleteProduct_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.DeleteProduct(childComplexity, args["productId"].(string)), true
 
 	case "Mutation.deleteRoom":
 		if e.complexity.Mutation.DeleteRoom == nil {
@@ -409,6 +709,88 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.UpdateOrganizer(childComplexity, args["name"].(string)), true
 
+	case "Mutation.updateProduct":
+		if e.complexity.Mutation.UpdateProduct == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_updateProduct_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UpdateProduct(childComplexity, args["input"].(models.UpdateProductInput)), true
+
+	case "Offer.amount":
+		if e.complexity.Offer.Amount == nil {
+			break
+		}
+
+		return e.complexity.Offer.Amount(childComplexity), true
+
+	case "Offer.auction":
+		if e.complexity.Offer.Auction == nil {
+			break
+		}
+
+		return e.complexity.Offer.Auction(childComplexity), true
+
+	case "Offer.consumer":
+		if e.complexity.Offer.Consumer == nil {
+			break
+		}
+
+		return e.complexity.Offer.Consumer(childComplexity), true
+
+	case "Offer.createdAt":
+		if e.complexity.Offer.CreatedAt == nil {
+			break
+		}
+
+		return e.complexity.Offer.CreatedAt(childComplexity), true
+
+	case "Offer.id":
+		if e.complexity.Offer.ID == nil {
+			break
+		}
+
+		return e.complexity.Offer.ID(childComplexity), true
+
+	case "OfferConnection.edges":
+		if e.complexity.OfferConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.OfferConnection.Edges(childComplexity), true
+
+	case "OfferConnection.pageInfo":
+		if e.complexity.OfferConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.OfferConnection.PageInfo(childComplexity), true
+
+	case "OfferConnectionEdge.cursor":
+		if e.complexity.OfferConnectionEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.OfferConnectionEdge.Cursor(childComplexity), true
+
+	case "OfferConnectionEdge.node":
+		if e.complexity.OfferConnectionEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.OfferConnectionEdge.Node(childComplexity), true
+
+	case "OfferResult.offer":
+		if e.complexity.OfferResult.Offer == nil {
+			break
+		}
+
+		return e.complexity.OfferResult.Offer(childComplexity), true
+
 	case "Organizer.bidStepTables":
 		if e.complexity.Organizer.BidStepTables == nil {
 			break
@@ -429,6 +811,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organizer.Name(childComplexity), true
+
+	case "Organizer.products":
+		if e.complexity.Organizer.Products == nil {
+			break
+		}
+
+		args, err := ec.field_Organizer_products_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organizer.Products(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.ProductFilter)), true
 
 	case "OrganizerConnection.edges":
 		if e.complexity.OrganizerConnection.Edges == nil {
@@ -493,6 +887,98 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.PageInfo.StartCursor(childComplexity), true
 
+	case "Product.auctions":
+		if e.complexity.Product.Auctions == nil {
+			break
+		}
+
+		args, err := ec.field_Product_auctions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Product.Auctions(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.AuctionFilter)), true
+
+	case "Product.id":
+		if e.complexity.Product.ID == nil {
+			break
+		}
+
+		return e.complexity.Product.ID(childComplexity), true
+
+	case "Product.name":
+		if e.complexity.Product.Name == nil {
+			break
+		}
+
+		return e.complexity.Product.Name(childComplexity), true
+
+	case "Product.organizer":
+		if e.complexity.Product.Organizer == nil {
+			break
+		}
+
+		return e.complexity.Product.Organizer(childComplexity), true
+
+	case "ProductConnection.edges":
+		if e.complexity.ProductConnection.Edges == nil {
+			break
+		}
+
+		return e.complexity.ProductConnection.Edges(childComplexity), true
+
+	case "ProductConnection.pageInfo":
+		if e.complexity.ProductConnection.PageInfo == nil {
+			break
+		}
+
+		return e.complexity.ProductConnection.PageInfo(childComplexity), true
+
+	case "ProductConnectionEdge.cursor":
+		if e.complexity.ProductConnectionEdge.Cursor == nil {
+			break
+		}
+
+		return e.complexity.ProductConnectionEdge.Cursor(childComplexity), true
+
+	case "ProductConnectionEdge.node":
+		if e.complexity.ProductConnectionEdge.Node == nil {
+			break
+		}
+
+		return e.complexity.ProductConnectionEdge.Node(childComplexity), true
+
+	case "ProductResult.product":
+		if e.complexity.ProductResult.Product == nil {
+			break
+		}
+
+		return e.complexity.ProductResult.Product(childComplexity), true
+
+	case "Query.auctions":
+		if e.complexity.Query.Auctions == nil {
+			break
+		}
+
+		args, err := ec.field_Query_auctions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Auctions(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.AuctionFilter)), true
+
+	case "Query.bidStepTables":
+		if e.complexity.Query.BidStepTables == nil {
+			break
+		}
+
+		args, err := ec.field_Query_bidStepTables_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.BidStepTables(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.BidStepTableFilter)), true
+
 	case "Query.consumers":
 		if e.complexity.Query.Consumers == nil {
 			break
@@ -505,6 +991,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Query.Consumers(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.ConsumerFilter)), true
 
+	case "Query.offers":
+		if e.complexity.Query.Offers == nil {
+			break
+		}
+
+		args, err := ec.field_Query_offers_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Offers(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.OfferFilter)), true
+
 	case "Query.organizers":
 		if e.complexity.Query.Organizers == nil {
 			break
@@ -516,6 +1014,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Query.Organizers(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.OrganizerFilter)), true
+
+	case "Query.products":
+		if e.complexity.Query.Products == nil {
+			break
+		}
+
+		args, err := ec.field_Query_products_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Query.Products(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.ProductFilter)), true
 
 	case "Query.rooms":
 		if e.complexity.Query.Rooms == nil {
@@ -542,6 +1052,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Room.Address(childComplexity), true
+
+	case "Room.auctions":
+		if e.complexity.Room.Auctions == nil {
+			break
+		}
+
+		args, err := ec.field_Room_auctions_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Room.Auctions(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.AuctionFilter)), true
 
 	case "Room.consumers":
 		if e.complexity.Room.Consumers == nil {
@@ -633,9 +1155,14 @@ func (e *executableSchema) Exec(ctx context.Context) graphql.ResponseHandler {
 	rc := graphql.GetOperationContext(ctx)
 	ec := executionContext{rc, e}
 	inputUnmarshalMap := graphql.BuildUnmarshalerMap(
+		ec.unmarshalInputAuctionFilter,
+		ec.unmarshalInputBidStepTableFilter,
 		ec.unmarshalInputConsumerFilter,
+		ec.unmarshalInputOfferFilter,
 		ec.unmarshalInputOrganizerFilter,
+		ec.unmarshalInputProductFilter,
 		ec.unmarshalInputRoomFilter,
+		ec.unmarshalInputupdateProductInput,
 	)
 	first := true
 
@@ -713,6 +1240,41 @@ func (ec *executionContext) introspectType(name string) (*introspection.Type, er
 }
 
 var sources = []*ast.Source{
+	{Name: "server/schema/auction.graphqls", Input: `type Auction {
+  id: ID!
+  room: Room!
+  product: Product!
+  bidStepTable: BidStepTable!
+  minAmount: Float
+  startedAt: DateTime!
+  finishedAt: DateTime
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
+}
+
+type AuctionResult {
+  auction: Auction!
+}
+
+type AuctionConnectionEdge {
+  cursor: ID!
+  node: Auction!
+}
+
+type AuctionConnection {
+  pageInfo: PageInfo!
+  edges: [AuctionConnectionEdge!]!
+}
+
+input AuctionFilter {
+  ids: [ID!]
+  rooms: [ID!]
+  products: [ID!]
+}
+
+extend type Query {
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
+}
+`, BuiltIn: false},
 	{Name: "server/schema/bid_step_table.graphqls", Input: `type BidStepRow {
   fromAmount: Float!
   step: Float!
@@ -724,9 +1286,38 @@ type BidStepTable {
   organizer: Organizer!
   rows: [BidStepRow!]!
 }
+
+type BidStepTableResult {
+  bidStepTable: BidStepTable!
+}
+
+type BidStepTableConnectionEdge {
+  cursor: ID!
+  node: BidStepTable!
+}
+
+type BidStepTableConnection {
+  pageInfo: PageInfo!
+  edges: [BidStepTableConnectionEdge!]!
+}
+
+input BidStepTableFilter {
+  ids: [ID!]
+  name: String
+  organizers: [ID!]
+}
+
+extend type Query {
+  bidStepTables(
+    first: Int
+    after: ID
+    filter: BidStepTableFilter
+  ): BidStepTableConnection!
+}
 `, BuiltIn: false},
 	{Name: "server/schema/common.graphqls", Input: `scalar Map
 scalar Dict
+scalar DateTime
 
 type TokenResult {
   token: String!
@@ -744,6 +1335,7 @@ type PageInfo {
   nickname: String!
   form: Map
   rooms(first: Int, after: ID, filter: RoomFilter): RoomConnection!
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
 }
 
 type ConsumerResult {
@@ -777,10 +1369,43 @@ extend type Mutation {
   exitRoom(roomId: ID!): Boolean!
 }
 `, BuiltIn: false},
+	{Name: "server/schema/offer.graphqls", Input: `type Offer {
+  id: ID!
+  consumer: Consumer!
+  auction: Auction!
+  amount: Float!
+  createdAt: DateTime!
+}
+
+type OfferResult {
+  offer: Offer!
+}
+
+type OfferConnectionEdge {
+  cursor: ID!
+  node: Offer!
+}
+
+type OfferConnection {
+  pageInfo: PageInfo!
+  edges: [OfferConnectionEdge!]!
+}
+
+input OfferFilter {
+  ids: [ID!]
+  consumers: [ID!]
+  auctions: [ID!]
+}
+
+extend type Query {
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
+}
+`, BuiltIn: false},
 	{Name: "server/schema/organizer.graphqls", Input: `type Organizer {
   id: ID!
   name: String!
   bidStepTables: [BidStepTable!]!
+  products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
 }
 
 type OrganizerResult {
@@ -815,12 +1440,55 @@ extend type Mutation {
   updateOrganizer(name: String!): OrganizerResult!
 }
 `, BuiltIn: false},
+	{Name: "server/schema/product.graphqls", Input: `type Product {
+  id: ID!
+  name: String!
+  organizer: Organizer!
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
+}
+
+type ProductResult {
+  product: Product!
+}
+
+type ProductConnectionEdge {
+  cursor: ID!
+  node: Product!
+}
+
+type ProductConnection {
+  pageInfo: PageInfo!
+  edges: [ProductConnectionEdge!]!
+}
+
+input ProductFilter {
+  ids: [ID!]
+  name: String
+  organizers: [ID!]
+}
+
+extend type Query {
+  products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
+}
+
+input updateProductInput {
+  productId: ID!
+  name: String!
+}
+
+extend type Mutation {
+  createProduct(name: String!): ProductResult!
+  deleteProduct(productId: ID!): Boolean!
+  updateProduct(input: updateProductInput!): ProductResult!
+}
+`, BuiltIn: false},
 	{Name: "server/schema/room.graphqls", Input: `type Room {
   id: ID!
   name: String!
   address: String!
   organizer: Organizer!
   consumers: [Consumer!]!
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
 }
 
 type RoomResult {
@@ -870,6 +1538,72 @@ var parsedSchema = gqlparser.MustLoadSchema(sources...)
 // endregion ************************** generated!.gotpl **************************
 
 // region    ***************************** args.gotpl *****************************
+
+func (ec *executionContext) field_Auction_offers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.OfferFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOOfferFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Consumer_offers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.OfferFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOOfferFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
 
 func (ec *executionContext) field_Consumer_rooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
@@ -943,6 +1677,21 @@ func (ec *executionContext) field_Mutation_createOrganizer_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_createProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["name"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+		arg0, err = ec.unmarshalNString2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["name"] = arg0
+	return args, nil
+}
+
 func (ec *executionContext) field_Mutation_createRoom_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -964,6 +1713,21 @@ func (ec *executionContext) field_Mutation_createRoom_args(ctx context.Context, 
 		}
 	}
 	args["address"] = arg1
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_deleteProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["productId"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["productId"] = arg0
 	return args, nil
 }
 
@@ -1051,6 +1815,87 @@ func (ec *executionContext) field_Mutation_updateOrganizer_args(ctx context.Cont
 	return args, nil
 }
 
+func (ec *executionContext) field_Mutation_updateProduct_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 models.UpdateProductInput
+	if tmp, ok := rawArgs["input"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("input"))
+		arg0, err = ec.unmarshalNupdateProductInput2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐUpdateProductInput(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Organizer_products_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.ProductFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOProductFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Product_auctions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.AuctionFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOAuctionFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1063,6 +1908,72 @@ func (ec *executionContext) field_Query___type_args(ctx context.Context, rawArgs
 		}
 	}
 	args["name"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_auctions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.AuctionFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOAuctionFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_bidStepTables_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.BidStepTableFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOBidStepTableFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
 	return args, nil
 }
 
@@ -1091,6 +2002,39 @@ func (ec *executionContext) field_Query_consumers_args(ctx context.Context, rawA
 	if tmp, ok := rawArgs["filter"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
 		arg2, err = ec.unmarshalOConsumerFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐConsumerFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Query_offers_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.OfferFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOOfferFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1132,6 +2076,39 @@ func (ec *executionContext) field_Query_organizers_args(ctx context.Context, raw
 	return args, nil
 }
 
+func (ec *executionContext) field_Query_products_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.ProductFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOProductFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
 func (ec *executionContext) field_Query_rooms_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
 	var err error
 	args := map[string]interface{}{}
@@ -1157,6 +2134,39 @@ func (ec *executionContext) field_Query_rooms_args(ctx context.Context, rawArgs 
 	if tmp, ok := rawArgs["filter"]; ok {
 		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
 		arg2, err = ec.unmarshalORoomFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoomFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Room_auctions_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.AuctionFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOAuctionFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionFilter(ctx, tmp)
 		if err != nil {
 			return nil, err
 		}
@@ -1218,6 +2228,675 @@ func (ec *executionContext) field___Type_fields_args(ctx context.Context, rawArg
 
 // region    **************************** field.gotpl *****************************
 
+func (ec *executionContext) _Auction_id(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_room(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_room(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().Room(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Room)
+	fc.Result = res
+	return ec.marshalNRoom2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoom(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_room(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Room_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Room_name(ctx, field)
+			case "address":
+				return ec.fieldContext_Room_address(ctx, field)
+			case "organizer":
+				return ec.fieldContext_Room_organizer(ctx, field)
+			case "consumers":
+				return ec.fieldContext_Room_consumers(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Room_auctions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_product(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_product(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().Product(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Product)
+	fc.Result = res
+	return ec.marshalNProduct2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProduct(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_product(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Product_name(ctx, field)
+			case "organizer":
+				return ec.fieldContext_Product_organizer(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Product_auctions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_bidStepTable(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_bidStepTable(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().BidStepTable(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.BidStepTable)
+	fc.Result = res
+	return ec.marshalNBidStepTable2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_bidStepTable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BidStepTable_id(ctx, field)
+			case "name":
+				return ec.fieldContext_BidStepTable_name(ctx, field)
+			case "organizer":
+				return ec.fieldContext_BidStepTable_organizer(ctx, field)
+			case "rows":
+				return ec.fieldContext_BidStepTable_rows(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BidStepTable", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_minAmount(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_minAmount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().MinAmount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*float64)
+	fc.Result = res
+	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_minAmount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_startedAt(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_startedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().StartedAt(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_startedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_finishedAt(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_finishedAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().FinishedAt(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		return graphql.Null
+	}
+	res := resTmp.(*string)
+	fc.Result = res
+	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_finishedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Auction_offers(ctx context.Context, field graphql.CollectedField, obj *models.Auction) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Auction_offers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Auction().Offers(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.OfferFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.OfferConnection)
+	fc.Result = res
+	return ec.marshalNOfferConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Auction_offers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Auction",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_OfferConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_OfferConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OfferConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Auction_offers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuctionConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.AuctionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuctionConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuctionConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuctionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuctionConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.AuctionConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuctionConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.AuctionConnectionEdge)
+	fc.Result = res
+	return ec.marshalNAuctionConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnectionEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuctionConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuctionConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_AuctionConnectionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_AuctionConnectionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuctionConnectionEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuctionConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.AuctionConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuctionConnectionEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuctionConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuctionConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuctionConnectionEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.AuctionConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuctionConnectionEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Auction)
+	fc.Result = res
+	return ec.marshalNAuction2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuction(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuctionConnectionEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuctionConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Auction_id(ctx, field)
+			case "room":
+				return ec.fieldContext_Auction_room(ctx, field)
+			case "product":
+				return ec.fieldContext_Auction_product(ctx, field)
+			case "bidStepTable":
+				return ec.fieldContext_Auction_bidStepTable(ctx, field)
+			case "minAmount":
+				return ec.fieldContext_Auction_minAmount(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_Auction_startedAt(ctx, field)
+			case "finishedAt":
+				return ec.fieldContext_Auction_finishedAt(ctx, field)
+			case "offers":
+				return ec.fieldContext_Auction_offers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Auction", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _AuctionResult_auction(ctx context.Context, field graphql.CollectedField, obj *models.AuctionResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_AuctionResult_auction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Auction, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Auction)
+	fc.Result = res
+	return ec.marshalNAuction2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuction(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_AuctionResult_auction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "AuctionResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Auction_id(ctx, field)
+			case "room":
+				return ec.fieldContext_Auction_room(ctx, field)
+			case "product":
+				return ec.fieldContext_Auction_product(ctx, field)
+			case "bidStepTable":
+				return ec.fieldContext_Auction_bidStepTable(ctx, field)
+			case "minAmount":
+				return ec.fieldContext_Auction_minAmount(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_Auction_startedAt(ctx, field)
+			case "finishedAt":
+				return ec.fieldContext_Auction_finishedAt(ctx, field)
+			case "offers":
+				return ec.fieldContext_Auction_offers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Auction", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _BidStepRow_fromAmount(ctx context.Context, field graphql.CollectedField, obj *models.BidStepRow) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_BidStepRow_fromAmount(ctx, field)
 	if err != nil {
@@ -1232,7 +2911,7 @@ func (ec *executionContext) _BidStepRow_fromAmount(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.FromAmount, nil
+		return ec.resolvers.BidStepRow().FromAmount(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1253,8 +2932,8 @@ func (ec *executionContext) fieldContext_BidStepRow_fromAmount(ctx context.Conte
 	fc = &graphql.FieldContext{
 		Object:     "BidStepRow",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -1276,7 +2955,7 @@ func (ec *executionContext) _BidStepRow_step(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Step, nil
+		return ec.resolvers.BidStepRow().Step(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1297,8 +2976,8 @@ func (ec *executionContext) fieldContext_BidStepRow_step(ctx context.Context, fi
 	fc = &graphql.FieldContext{
 		Object:     "BidStepRow",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -1408,7 +3087,7 @@ func (ec *executionContext) _BidStepTable_organizer(ctx context.Context, field g
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return obj.Organizer, nil
+		return ec.resolvers.BidStepTable().Organizer(rctx, obj)
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -1429,8 +3108,8 @@ func (ec *executionContext) fieldContext_BidStepTable_organizer(ctx context.Cont
 	fc = &graphql.FieldContext{
 		Object:     "BidStepTable",
 		Field:      field,
-		IsMethod:   false,
-		IsResolver: false,
+		IsMethod:   true,
+		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
 			case "id":
@@ -1439,6 +3118,8 @@ func (ec *executionContext) fieldContext_BidStepTable_organizer(ctx context.Cont
 				return ec.fieldContext_Organizer_name(ctx, field)
 			case "bidStepTables":
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
+			case "products":
+				return ec.fieldContext_Organizer_products(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -1491,6 +3172,262 @@ func (ec *executionContext) fieldContext_BidStepTable_rows(ctx context.Context, 
 				return ec.fieldContext_BidStepRow_step(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BidStepRow", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BidStepTableConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.BidStepTableConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BidStepTableConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BidStepTableConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BidStepTableConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BidStepTableConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.BidStepTableConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BidStepTableConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.BidStepTableConnectionEdge)
+	fc.Result = res
+	return ec.marshalNBidStepTableConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnectionEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BidStepTableConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BidStepTableConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_BidStepTableConnectionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_BidStepTableConnectionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BidStepTableConnectionEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BidStepTableConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.BidStepTableConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BidStepTableConnectionEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BidStepTableConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BidStepTableConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BidStepTableConnectionEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.BidStepTableConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BidStepTableConnectionEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.BidStepTable)
+	fc.Result = res
+	return ec.marshalNBidStepTable2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BidStepTableConnectionEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BidStepTableConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BidStepTable_id(ctx, field)
+			case "name":
+				return ec.fieldContext_BidStepTable_name(ctx, field)
+			case "organizer":
+				return ec.fieldContext_BidStepTable_organizer(ctx, field)
+			case "rows":
+				return ec.fieldContext_BidStepTable_rows(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BidStepTable", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _BidStepTableResult_bidStepTable(ctx context.Context, field graphql.CollectedField, obj *models.BidStepTableResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_BidStepTableResult_bidStepTable(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.BidStepTable, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.BidStepTable)
+	fc.Result = res
+	return ec.marshalNBidStepTable2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_BidStepTableResult_bidStepTable(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "BidStepTableResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_BidStepTable_id(ctx, field)
+			case "name":
+				return ec.fieldContext_BidStepTable_name(ctx, field)
+			case "organizer":
+				return ec.fieldContext_BidStepTable_organizer(ctx, field)
+			case "rows":
+				return ec.fieldContext_BidStepTable_rows(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BidStepTable", field.Name)
 		},
 	}
 	return fc, nil
@@ -1680,6 +3617,67 @@ func (ec *executionContext) fieldContext_Consumer_rooms(ctx context.Context, fie
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Consumer_rooms_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Consumer_offers(ctx context.Context, field graphql.CollectedField, obj *models.Consumer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Consumer_offers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Consumer().Offers(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.OfferFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.OfferConnection)
+	fc.Result = res
+	return ec.marshalNOfferConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Consumer_offers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Consumer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_OfferConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_OfferConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OfferConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Consumer_offers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -1881,6 +3879,8 @@ func (ec *executionContext) fieldContext_ConsumerConnectionEdge_node(ctx context
 				return ec.fieldContext_Consumer_form(ctx, field)
 			case "rooms":
 				return ec.fieldContext_Consumer_rooms(ctx, field)
+			case "offers":
+				return ec.fieldContext_Consumer_offers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
 		},
@@ -1935,6 +3935,8 @@ func (ec *executionContext) fieldContext_ConsumerResult_consumer(ctx context.Con
 				return ec.fieldContext_Consumer_form(ctx, field)
 			case "rooms":
 				return ec.fieldContext_Consumer_rooms(ctx, field)
+			case "offers":
+				return ec.fieldContext_Consumer_offers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
 		},
@@ -2288,6 +4290,179 @@ func (ec *executionContext) fieldContext_Mutation_updateOrganizer(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_createProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_createProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().CreateProduct(rctx, fc.Args["name"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.ProductResult)
+	fc.Result = res
+	return ec.marshalNProductResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_createProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "product":
+				return ec.fieldContext_ProductResult_product(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_createProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_deleteProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().DeleteProduct(rctx, fc.Args["productId"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(bool)
+	fc.Result = res
+	return ec.marshalNBoolean2bool(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_deleteProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Boolean does not have child fields")
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_deleteProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_updateProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_updateProduct(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UpdateProduct(rctx, fc.Args["input"].(models.UpdateProductInput))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.ProductResult)
+	fc.Result = res
+	return ec.marshalNProductResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_updateProduct(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "product":
+				return ec.fieldContext_ProductResult_product(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_updateProduct_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createRoom(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createRoom(ctx, field)
 	if err != nil {
@@ -2398,6 +4573,516 @@ func (ec *executionContext) fieldContext_Mutation_deleteRoom(ctx context.Context
 	if fc.Args, err = ec.field_Mutation_deleteRoom_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Offer_id(ctx context.Context, field graphql.CollectedField, obj *models.Offer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Offer_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Offer_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Offer_consumer(ctx context.Context, field graphql.CollectedField, obj *models.Offer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Offer_consumer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Offer().Consumer(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Consumer)
+	fc.Result = res
+	return ec.marshalNConsumer2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐConsumer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Offer_consumer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Consumer_id(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Consumer_nickname(ctx, field)
+			case "form":
+				return ec.fieldContext_Consumer_form(ctx, field)
+			case "rooms":
+				return ec.fieldContext_Consumer_rooms(ctx, field)
+			case "offers":
+				return ec.fieldContext_Consumer_offers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Offer_auction(ctx context.Context, field graphql.CollectedField, obj *models.Offer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Offer_auction(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Offer().Auction(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Auction)
+	fc.Result = res
+	return ec.marshalNAuction2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuction(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Offer_auction(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Auction_id(ctx, field)
+			case "room":
+				return ec.fieldContext_Auction_room(ctx, field)
+			case "product":
+				return ec.fieldContext_Auction_product(ctx, field)
+			case "bidStepTable":
+				return ec.fieldContext_Auction_bidStepTable(ctx, field)
+			case "minAmount":
+				return ec.fieldContext_Auction_minAmount(ctx, field)
+			case "startedAt":
+				return ec.fieldContext_Auction_startedAt(ctx, field)
+			case "finishedAt":
+				return ec.fieldContext_Auction_finishedAt(ctx, field)
+			case "offers":
+				return ec.fieldContext_Auction_offers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Auction", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Offer_amount(ctx context.Context, field graphql.CollectedField, obj *models.Offer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Offer_amount(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Offer().Amount(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(float64)
+	fc.Result = res
+	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Offer_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type Float does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Offer_createdAt(ctx context.Context, field graphql.CollectedField, obj *models.Offer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Offer_createdAt(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Offer().CreatedAt(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Offer_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Offer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type DateTime does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OfferConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.OfferConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OfferConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OfferConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OfferConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OfferConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.OfferConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OfferConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.OfferConnectionEdge)
+	fc.Result = res
+	return ec.marshalNOfferConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnectionEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OfferConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OfferConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_OfferConnectionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_OfferConnectionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OfferConnectionEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OfferConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.OfferConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OfferConnectionEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OfferConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OfferConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OfferConnectionEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.OfferConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OfferConnectionEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOffer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OfferConnectionEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OfferConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Offer_id(ctx, field)
+			case "consumer":
+				return ec.fieldContext_Offer_consumer(ctx, field)
+			case "auction":
+				return ec.fieldContext_Offer_auction(ctx, field)
+			case "amount":
+				return ec.fieldContext_Offer_amount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Offer_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Offer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _OfferResult_offer(ctx context.Context, field graphql.CollectedField, obj *models.OfferResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_OfferResult_offer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Offer, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Offer)
+	fc.Result = res
+	return ec.marshalNOffer2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOffer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_OfferResult_offer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "OfferResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Offer_id(ctx, field)
+			case "consumer":
+				return ec.fieldContext_Offer_consumer(ctx, field)
+			case "auction":
+				return ec.fieldContext_Offer_auction(ctx, field)
+			case "amount":
+				return ec.fieldContext_Offer_amount(ctx, field)
+			case "createdAt":
+				return ec.fieldContext_Offer_createdAt(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Offer", field.Name)
+		},
 	}
 	return fc, nil
 }
@@ -2540,6 +5225,67 @@ func (ec *executionContext) fieldContext_Organizer_bidStepTables(ctx context.Con
 			}
 			return nil, fmt.Errorf("no field named %q was found under type BidStepTable", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Organizer_products(ctx context.Context, field graphql.CollectedField, obj *models.Organizer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organizer_products(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organizer().Products(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.ProductFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.ProductConnection)
+	fc.Result = res
+	return ec.marshalNProductConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organizer_products(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organizer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_ProductConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProductConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organizer_products_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -2737,6 +5483,8 @@ func (ec *executionContext) fieldContext_OrganizerConnectionEdge_node(ctx contex
 				return ec.fieldContext_Organizer_name(ctx, field)
 			case "bidStepTables":
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
+			case "products":
+				return ec.fieldContext_Organizer_products(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -2789,6 +5537,8 @@ func (ec *executionContext) fieldContext_OrganizerResult_orgainzer(ctx context.C
 				return ec.fieldContext_Organizer_name(ctx, field)
 			case "bidStepTables":
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
+			case "products":
+				return ec.fieldContext_Organizer_products(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -2966,6 +5716,587 @@ func (ec *executionContext) fieldContext_PageInfo_endCursor(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Product_id(ctx context.Context, field graphql.CollectedField, obj *models.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_id(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.ID, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_id(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_name(ctx context.Context, field graphql.CollectedField, obj *models.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_name(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Name, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNString2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_name(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type String does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_organizer(ctx context.Context, field graphql.CollectedField, obj *models.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_organizer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Product().Organizer(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Organizer)
+	fc.Result = res
+	return ec.marshalNOrganizer2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOrganizer(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_organizer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Organizer_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Organizer_name(ctx, field)
+			case "bidStepTables":
+				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
+			case "products":
+				return ec.fieldContext_Organizer_products(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Product_auctions(ctx context.Context, field graphql.CollectedField, obj *models.Product) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Product_auctions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Product().Auctions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.AuctionFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.AuctionConnection)
+	fc.Result = res
+	return ec.marshalNAuctionConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Product_auctions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Product",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_AuctionConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_AuctionConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuctionConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Product_auctions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.ProductConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductConnection_pageInfo(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.PageInfo, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.PageInfo)
+	fc.Result = res
+	return ec.marshalNPageInfo2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐPageInfo(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductConnection_pageInfo(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "hasNextPage":
+				return ec.fieldContext_PageInfo_hasNextPage(ctx, field)
+			case "hasPreviousPage":
+				return ec.fieldContext_PageInfo_hasPreviousPage(ctx, field)
+			case "startCursor":
+				return ec.fieldContext_PageInfo_startCursor(ctx, field)
+			case "endCursor":
+				return ec.fieldContext_PageInfo_endCursor(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type PageInfo", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductConnection_edges(ctx context.Context, field graphql.CollectedField, obj *models.ProductConnection) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductConnection_edges(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Edges, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.ProductConnectionEdge)
+	fc.Result = res
+	return ec.marshalNProductConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnectionEdgeᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductConnection_edges(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductConnection",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "cursor":
+				return ec.fieldContext_ProductConnectionEdge_cursor(ctx, field)
+			case "node":
+				return ec.fieldContext_ProductConnectionEdge_node(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductConnectionEdge", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField, obj *models.ProductConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductConnectionEdge_cursor(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Cursor, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(string)
+	fc.Result = res
+	return ec.marshalNID2string(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductConnectionEdge_cursor(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			return nil, errors.New("field of type ID does not have child fields")
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductConnectionEdge_node(ctx context.Context, field graphql.CollectedField, obj *models.ProductConnectionEdge) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductConnectionEdge_node(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Node, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Product)
+	fc.Result = res
+	return ec.marshalNProduct2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProduct(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductConnectionEdge_node(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductConnectionEdge",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Product_name(ctx, field)
+			case "organizer":
+				return ec.fieldContext_Product_organizer(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Product_auctions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _ProductResult_product(ctx context.Context, field graphql.CollectedField, obj *models.ProductResult) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_ProductResult_product(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return obj.Product, nil
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.Product)
+	fc.Result = res
+	return ec.marshalNProduct2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProduct(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_ProductResult_product(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "ProductResult",
+		Field:      field,
+		IsMethod:   false,
+		IsResolver: false,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Product_id(ctx, field)
+			case "name":
+				return ec.fieldContext_Product_name(ctx, field)
+			case "organizer":
+				return ec.fieldContext_Product_organizer(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Product_auctions(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Product", field.Name)
+		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_auctions(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_auctions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Auctions(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.AuctionFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.AuctionConnection)
+	fc.Result = res
+	return ec.marshalNAuctionConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_auctions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_AuctionConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_AuctionConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuctionConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_auctions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_bidStepTables(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_bidStepTables(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().BidStepTables(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.BidStepTableFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.BidStepTableConnection)
+	fc.Result = res
+	return ec.marshalNBidStepTableConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_bidStepTables(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_BidStepTableConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_BidStepTableConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type BidStepTableConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_bidStepTables_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_consumers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_consumers(ctx, field)
 	if err != nil {
@@ -3027,6 +6358,67 @@ func (ec *executionContext) fieldContext_Query_consumers(ctx context.Context, fi
 	return fc, nil
 }
 
+func (ec *executionContext) _Query_offers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_offers(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Offers(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.OfferFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.OfferConnection)
+	fc.Result = res
+	return ec.marshalNOfferConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_offers(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_OfferConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_OfferConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OfferConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_offers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Query_organizers(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Query_organizers(ctx, field)
 	if err != nil {
@@ -3082,6 +6474,67 @@ func (ec *executionContext) fieldContext_Query_organizers(ctx context.Context, f
 	}()
 	ctx = graphql.WithFieldContext(ctx, fc)
 	if fc.Args, err = ec.field_Query_organizers_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Query_products(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Query_products(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Query().Products(rctx, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.ProductFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.ProductConnection)
+	fc.Result = res
+	return ec.marshalNProductConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Query_products(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Query",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_ProductConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_ProductConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type ProductConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Query_products_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
 		ec.Error(ctx, err)
 		return
 	}
@@ -3496,6 +6949,8 @@ func (ec *executionContext) fieldContext_Room_organizer(ctx context.Context, fie
 				return ec.fieldContext_Organizer_name(ctx, field)
 			case "bidStepTables":
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
+			case "products":
+				return ec.fieldContext_Organizer_products(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -3550,9 +7005,72 @@ func (ec *executionContext) fieldContext_Room_consumers(ctx context.Context, fie
 				return ec.fieldContext_Consumer_form(ctx, field)
 			case "rooms":
 				return ec.fieldContext_Consumer_rooms(ctx, field)
+			case "offers":
+				return ec.fieldContext_Consumer_offers(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
 		},
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Room_auctions(ctx context.Context, field graphql.CollectedField, obj *models.Room) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Room_auctions(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Room().Auctions(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.AuctionFilter))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.AuctionConnection)
+	fc.Result = res
+	return ec.marshalNAuctionConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnection(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Room_auctions(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Room",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "pageInfo":
+				return ec.fieldContext_AuctionConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_AuctionConnection_edges(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type AuctionConnection", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Room_auctions_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -3754,6 +7272,8 @@ func (ec *executionContext) fieldContext_RoomConnectionEdge_node(ctx context.Con
 				return ec.fieldContext_Room_organizer(ctx, field)
 			case "consumers":
 				return ec.fieldContext_Room_consumers(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Room_auctions(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -3810,6 +7330,8 @@ func (ec *executionContext) fieldContext_RoomResult_room(ctx context.Context, fi
 				return ec.fieldContext_Room_organizer(ctx, field)
 			case "consumers":
 				return ec.fieldContext_Room_consumers(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Room_auctions(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -3876,6 +7398,8 @@ func (ec *executionContext) fieldContext_Subscription_consumersInRoomUpdated(ctx
 				return ec.fieldContext_Room_organizer(ctx, field)
 			case "consumers":
 				return ec.fieldContext_Room_consumers(ctx, field)
+			case "auctions":
+				return ec.fieldContext_Room_auctions(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Room", field.Name)
 		},
@@ -5711,6 +9235,84 @@ func (ec *executionContext) fieldContext___Type_specifiedByURL(ctx context.Conte
 
 // region    **************************** input.gotpl *****************************
 
+func (ec *executionContext) unmarshalInputAuctionFilter(ctx context.Context, obj interface{}) (models.AuctionFilter, error) {
+	var it models.AuctionFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "ids":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			it.Ids, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "rooms":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("rooms"))
+			it.Rooms, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "products":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("products"))
+			it.Products, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputBidStepTableFilter(ctx context.Context, obj interface{}) (models.BidStepTableFilter, error) {
+	var it models.BidStepTableFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "ids":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			it.Ids, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "organizers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizers"))
+			it.Organizers, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputConsumerFilter(ctx context.Context, obj interface{}) (models.ConsumerFilter, error) {
 	var it models.ConsumerFilter
 	asMap := map[string]interface{}{}
@@ -5750,6 +9352,45 @@ func (ec *executionContext) unmarshalInputConsumerFilter(ctx context.Context, ob
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputOfferFilter(ctx context.Context, obj interface{}) (models.OfferFilter, error) {
+	var it models.OfferFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "ids":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			it.Ids, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "consumers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consumers"))
+			it.Consumers, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "auctions":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("auctions"))
+			it.Auctions, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 func (ec *executionContext) unmarshalInputOrganizerFilter(ctx context.Context, obj interface{}) (models.OrganizerFilter, error) {
 	var it models.OrganizerFilter
 	asMap := map[string]interface{}{}
@@ -5772,6 +9413,45 @@ func (ec *executionContext) unmarshalInputOrganizerFilter(ctx context.Context, o
 
 			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
 			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
+func (ec *executionContext) unmarshalInputProductFilter(ctx context.Context, obj interface{}) (models.ProductFilter, error) {
+	var it models.ProductFilter
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "ids":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("ids"))
+			it.Ids, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalOString2ᚖstring(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "organizers":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("organizers"))
+			it.Organizers, err = ec.unmarshalOID2ᚕstringᚄ(ctx, v)
 			if err != nil {
 				return it, err
 			}
@@ -5836,6 +9516,37 @@ func (ec *executionContext) unmarshalInputRoomFilter(ctx context.Context, obj in
 	return it, nil
 }
 
+func (ec *executionContext) unmarshalInputupdateProductInput(ctx context.Context, obj interface{}) (models.UpdateProductInput, error) {
+	var it models.UpdateProductInput
+	asMap := map[string]interface{}{}
+	for k, v := range obj.(map[string]interface{}) {
+		asMap[k] = v
+	}
+
+	for k, v := range asMap {
+		switch k {
+		case "productId":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("productId"))
+			it.ProductID, err = ec.unmarshalNID2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		case "name":
+			var err error
+
+			ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("name"))
+			it.Name, err = ec.unmarshalNString2string(ctx, v)
+			if err != nil {
+				return it, err
+			}
+		}
+	}
+
+	return it, nil
+}
+
 // endregion **************************** input.gotpl *****************************
 
 // region    ************************** interface.gotpl ***************************
@@ -5867,6 +9578,266 @@ func (ec *executionContext) _Viewer(ctx context.Context, sel ast.SelectionSet, o
 
 // region    **************************** object.gotpl ****************************
 
+var auctionImplementors = []string{"Auction"}
+
+func (ec *executionContext) _Auction(ctx context.Context, sel ast.SelectionSet, obj *models.Auction) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, auctionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Auction")
+		case "id":
+
+			out.Values[i] = ec._Auction_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "room":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_room(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "product":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_product(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "bidStepTable":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_bidStepTable(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "minAmount":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_minAmount(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "startedAt":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_startedAt(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "finishedAt":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_finishedAt(ctx, field, obj)
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "offers":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Auction_offers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var auctionConnectionImplementors = []string{"AuctionConnection"}
+
+func (ec *executionContext) _AuctionConnection(ctx context.Context, sel ast.SelectionSet, obj *models.AuctionConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, auctionConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuctionConnection")
+		case "pageInfo":
+
+			out.Values[i] = ec._AuctionConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "edges":
+
+			out.Values[i] = ec._AuctionConnection_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var auctionConnectionEdgeImplementors = []string{"AuctionConnectionEdge"}
+
+func (ec *executionContext) _AuctionConnectionEdge(ctx context.Context, sel ast.SelectionSet, obj *models.AuctionConnectionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, auctionConnectionEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuctionConnectionEdge")
+		case "cursor":
+
+			out.Values[i] = ec._AuctionConnectionEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._AuctionConnectionEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var auctionResultImplementors = []string{"AuctionResult"}
+
+func (ec *executionContext) _AuctionResult(ctx context.Context, sel ast.SelectionSet, obj *models.AuctionResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, auctionResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("AuctionResult")
+		case "auction":
+
+			out.Values[i] = ec._AuctionResult_auction(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var bidStepRowImplementors = []string{"BidStepRow"}
 
 func (ec *executionContext) _BidStepRow(ctx context.Context, sel ast.SelectionSet, obj *models.BidStepRow) graphql.Marshaler {
@@ -5878,19 +9849,45 @@ func (ec *executionContext) _BidStepRow(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BidStepRow")
 		case "fromAmount":
+			field := field
 
-			out.Values[i] = ec._BidStepRow_fromAmount(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BidStepRow_fromAmount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		case "step":
+			field := field
 
-			out.Values[i] = ec._BidStepRow_step(ctx, field, obj)
-
-			if out.Values[i] == graphql.Null {
-				invalids++
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BidStepRow_step(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
 			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -5917,25 +9914,136 @@ func (ec *executionContext) _BidStepTable(ctx context.Context, sel ast.Selection
 			out.Values[i] = ec._BidStepTable_id(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "name":
 
 			out.Values[i] = ec._BidStepTable_name(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
-				invalids++
+				atomic.AddUint32(&invalids, 1)
 			}
 		case "organizer":
+			field := field
 
-			out.Values[i] = ec._BidStepTable_organizer(ctx, field, obj)
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._BidStepTable_organizer(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "rows":
+
+			out.Values[i] = ec._BidStepTable_rows(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var bidStepTableConnectionImplementors = []string{"BidStepTableConnection"}
+
+func (ec *executionContext) _BidStepTableConnection(ctx context.Context, sel ast.SelectionSet, obj *models.BidStepTableConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bidStepTableConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BidStepTableConnection")
+		case "pageInfo":
+
+			out.Values[i] = ec._BidStepTableConnection_pageInfo(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
-		case "rows":
+		case "edges":
 
-			out.Values[i] = ec._BidStepTable_rows(ctx, field, obj)
+			out.Values[i] = ec._BidStepTableConnection_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var bidStepTableConnectionEdgeImplementors = []string{"BidStepTableConnectionEdge"}
+
+func (ec *executionContext) _BidStepTableConnectionEdge(ctx context.Context, sel ast.SelectionSet, obj *models.BidStepTableConnectionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bidStepTableConnectionEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BidStepTableConnectionEdge")
+		case "cursor":
+
+			out.Values[i] = ec._BidStepTableConnectionEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._BidStepTableConnectionEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var bidStepTableResultImplementors = []string{"BidStepTableResult"}
+
+func (ec *executionContext) _BidStepTableResult(ctx context.Context, sel ast.SelectionSet, obj *models.BidStepTableResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, bidStepTableResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("BidStepTableResult")
+		case "bidStepTable":
+
+			out.Values[i] = ec._BidStepTableResult_bidStepTable(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -5989,6 +10097,26 @@ func (ec *executionContext) _Consumer(ctx context.Context, sel ast.SelectionSet,
 					}
 				}()
 				res = ec._Consumer_rooms(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "offers":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Consumer_offers(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -6181,6 +10309,33 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "createProduct":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_createProduct(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "deleteProduct":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_deleteProduct(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "updateProduct":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_updateProduct(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createRoom":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -6195,6 +10350,212 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
 				return ec._Mutation_deleteRoom(ctx, field)
 			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var offerImplementors = []string{"Offer"}
+
+func (ec *executionContext) _Offer(ctx context.Context, sel ast.SelectionSet, obj *models.Offer) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, offerImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Offer")
+		case "id":
+
+			out.Values[i] = ec._Offer_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "consumer":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Offer_consumer(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "auction":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Offer_auction(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "amount":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Offer_amount(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "createdAt":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Offer_createdAt(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var offerConnectionImplementors = []string{"OfferConnection"}
+
+func (ec *executionContext) _OfferConnection(ctx context.Context, sel ast.SelectionSet, obj *models.OfferConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, offerConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OfferConnection")
+		case "pageInfo":
+
+			out.Values[i] = ec._OfferConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "edges":
+
+			out.Values[i] = ec._OfferConnection_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var offerConnectionEdgeImplementors = []string{"OfferConnectionEdge"}
+
+func (ec *executionContext) _OfferConnectionEdge(ctx context.Context, sel ast.SelectionSet, obj *models.OfferConnectionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, offerConnectionEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OfferConnectionEdge")
+		case "cursor":
+
+			out.Values[i] = ec._OfferConnectionEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._OfferConnectionEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var offerResultImplementors = []string{"OfferResult"}
+
+func (ec *executionContext) _OfferResult(ctx context.Context, sel ast.SelectionSet, obj *models.OfferResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, offerResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("OfferResult")
+		case "offer":
+
+			out.Values[i] = ec._OfferResult_offer(ctx, field, obj)
 
 			if out.Values[i] == graphql.Null {
 				invalids++
@@ -6244,6 +10605,26 @@ func (ec *executionContext) _Organizer(ctx context.Context, sel ast.SelectionSet
 					}
 				}()
 				res = ec._Organizer_bidStepTables(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "products":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organizer_products(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -6406,6 +10787,179 @@ func (ec *executionContext) _PageInfo(ctx context.Context, sel ast.SelectionSet,
 	return out
 }
 
+var productImplementors = []string{"Product"}
+
+func (ec *executionContext) _Product(ctx context.Context, sel ast.SelectionSet, obj *models.Product) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("Product")
+		case "id":
+
+			out.Values[i] = ec._Product_id(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "name":
+
+			out.Values[i] = ec._Product_name(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
+			}
+		case "organizer":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Product_organizer(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "auctions":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Product_auctions(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var productConnectionImplementors = []string{"ProductConnection"}
+
+func (ec *executionContext) _ProductConnection(ctx context.Context, sel ast.SelectionSet, obj *models.ProductConnection) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productConnectionImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProductConnection")
+		case "pageInfo":
+
+			out.Values[i] = ec._ProductConnection_pageInfo(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "edges":
+
+			out.Values[i] = ec._ProductConnection_edges(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var productConnectionEdgeImplementors = []string{"ProductConnectionEdge"}
+
+func (ec *executionContext) _ProductConnectionEdge(ctx context.Context, sel ast.SelectionSet, obj *models.ProductConnectionEdge) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productConnectionEdgeImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProductConnectionEdge")
+		case "cursor":
+
+			out.Values[i] = ec._ProductConnectionEdge_cursor(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "node":
+
+			out.Values[i] = ec._ProductConnectionEdge_node(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
+var productResultImplementors = []string{"ProductResult"}
+
+func (ec *executionContext) _ProductResult(ctx context.Context, sel ast.SelectionSet, obj *models.ProductResult) graphql.Marshaler {
+	fields := graphql.CollectFields(ec.OperationContext, sel, productResultImplementors)
+	out := graphql.NewFieldSet(fields)
+	var invalids uint32
+	for i, field := range fields {
+		switch field.Name {
+		case "__typename":
+			out.Values[i] = graphql.MarshalString("ProductResult")
+		case "product":
+
+			out.Values[i] = ec._ProductResult_product(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		default:
+			panic("unknown field " + strconv.Quote(field.Name))
+		}
+	}
+	out.Dispatch()
+	if invalids > 0 {
+		return graphql.Null
+	}
+	return out
+}
+
 var queryImplementors = []string{"Query"}
 
 func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) graphql.Marshaler {
@@ -6425,6 +10979,52 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 		switch field.Name {
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("Query")
+		case "auctions":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_auctions(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "bidStepTables":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_bidStepTables(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "consumers":
 			field := field
 
@@ -6448,6 +11048,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 			out.Concurrently(i, func() graphql.Marshaler {
 				return rrm(innerCtx)
 			})
+		case "offers":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_offers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
 		case "organizers":
 			field := field
 
@@ -6458,6 +11081,29 @@ func (ec *executionContext) _Query(ctx context.Context, sel ast.SelectionSet) gr
 					}
 				}()
 				res = ec._Query_organizers(ctx, field)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			rrm := func(ctx context.Context) graphql.Marshaler {
+				return ec.OperationContext.RootResolverMiddleware(ctx, innerFunc)
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return rrm(innerCtx)
+			})
+		case "products":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Query_products(ctx, field)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -6598,6 +11244,26 @@ func (ec *executionContext) _Room(ctx context.Context, sel ast.SelectionSet, obj
 					}
 				}()
 				res = ec._Room_consumers(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "auctions":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Room_auctions(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}
@@ -7083,6 +11749,82 @@ func (ec *executionContext) ___Type(ctx context.Context, sel ast.SelectionSet, o
 
 // region    ***************************** type.gotpl *****************************
 
+func (ec *executionContext) marshalNAuction2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuction(ctx context.Context, sel ast.SelectionSet, v models.Auction) graphql.Marshaler {
+	return ec._Auction(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuction2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuction(ctx context.Context, sel ast.SelectionSet, v *models.Auction) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Auction(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAuctionConnection2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnection(ctx context.Context, sel ast.SelectionSet, v models.AuctionConnection) graphql.Marshaler {
+	return ec._AuctionConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuctionConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnection(ctx context.Context, sel ast.SelectionSet, v *models.AuctionConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._AuctionConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNAuctionConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnectionEdge(ctx context.Context, sel ast.SelectionSet, v models.AuctionConnectionEdge) graphql.Marshaler {
+	return ec._AuctionConnectionEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNAuctionConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnectionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []models.AuctionConnectionEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNAuctionConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionConnectionEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
 func (ec *executionContext) marshalNBidStepRow2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepRow(ctx context.Context, sel ast.SelectionSet, v models.BidStepRow) graphql.Marshaler {
 	return ec._BidStepRow(ctx, sel, &v)
 }
@@ -7160,6 +11902,78 @@ func (ec *executionContext) marshalNBidStepTable2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋser
 				defer wg.Done()
 			}
 			ret[i] = ec.marshalNBidStepTable2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNBidStepTable2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx context.Context, sel ast.SelectionSet, v *models.BidStepTable) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BidStepTable(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBidStepTableConnection2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnection(ctx context.Context, sel ast.SelectionSet, v models.BidStepTableConnection) graphql.Marshaler {
+	return ec._BidStepTableConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBidStepTableConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnection(ctx context.Context, sel ast.SelectionSet, v *models.BidStepTableConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._BidStepTableConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNBidStepTableConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnectionEdge(ctx context.Context, sel ast.SelectionSet, v models.BidStepTableConnectionEdge) graphql.Marshaler {
+	return ec._BidStepTableConnectionEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNBidStepTableConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnectionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []models.BidStepTableConnectionEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNBidStepTableConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnectionEdge(ctx, sel, v[i])
 		}
 		if isLen1 {
 			f(i)
@@ -7328,6 +12142,21 @@ func (ec *executionContext) marshalNConsumerResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋs
 	return ec._ConsumerResult(ctx, sel, v)
 }
 
+func (ec *executionContext) unmarshalNDateTime2string(ctx context.Context, v interface{}) (string, error) {
+	res, err := graphql.UnmarshalString(v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
+	res := graphql.MarshalString(v)
+	if res == graphql.Null {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+	}
+	return res
+}
+
 func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
 	res, err := graphql.UnmarshalFloatContext(ctx, v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7377,6 +12206,78 @@ func (ec *executionContext) marshalNMap2map(ctx context.Context, sel ast.Selecti
 		}
 	}
 	return res
+}
+
+func (ec *executionContext) marshalNOffer2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOffer(ctx context.Context, sel ast.SelectionSet, v *models.Offer) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Offer(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNOfferConnection2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnection(ctx context.Context, sel ast.SelectionSet, v models.OfferConnection) graphql.Marshaler {
+	return ec._OfferConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOfferConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnection(ctx context.Context, sel ast.SelectionSet, v *models.OfferConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._OfferConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNOfferConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnectionEdge(ctx context.Context, sel ast.SelectionSet, v models.OfferConnectionEdge) graphql.Marshaler {
+	return ec._OfferConnectionEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNOfferConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnectionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []models.OfferConnectionEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNOfferConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferConnectionEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
 }
 
 func (ec *executionContext) marshalNOrganizer2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOrganizer(ctx context.Context, sel ast.SelectionSet, v models.Organizer) graphql.Marshaler {
@@ -7477,6 +12378,96 @@ func (ec *executionContext) marshalNPageInfo2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserver�
 		return graphql.Null
 	}
 	return ec._PageInfo(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProduct2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProduct(ctx context.Context, sel ast.SelectionSet, v models.Product) graphql.Marshaler {
+	return ec._Product(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProduct2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProduct(ctx context.Context, sel ast.SelectionSet, v *models.Product) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._Product(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProductConnection2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnection(ctx context.Context, sel ast.SelectionSet, v models.ProductConnection) graphql.Marshaler {
+	return ec._ProductConnection(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProductConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnection(ctx context.Context, sel ast.SelectionSet, v *models.ProductConnection) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProductConnection(ctx, sel, v)
+}
+
+func (ec *executionContext) marshalNProductConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnectionEdge(ctx context.Context, sel ast.SelectionSet, v models.ProductConnectionEdge) graphql.Marshaler {
+	return ec._ProductConnectionEdge(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProductConnectionEdge2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnectionEdgeᚄ(ctx context.Context, sel ast.SelectionSet, v []models.ProductConnectionEdge) graphql.Marshaler {
+	ret := make(graphql.Array, len(v))
+	var wg sync.WaitGroup
+	isLen1 := len(v) == 1
+	if !isLen1 {
+		wg.Add(len(v))
+	}
+	for i := range v {
+		i := i
+		fc := &graphql.FieldContext{
+			Index:  &i,
+			Result: &v[i],
+		}
+		ctx := graphql.WithFieldContext(ctx, fc)
+		f := func(i int) {
+			defer func() {
+				if r := recover(); r != nil {
+					ec.Error(ctx, ec.Recover(ctx, r))
+					ret = nil
+				}
+			}()
+			if !isLen1 {
+				defer wg.Done()
+			}
+			ret[i] = ec.marshalNProductConnectionEdge2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductConnectionEdge(ctx, sel, v[i])
+		}
+		if isLen1 {
+			f(i)
+		} else {
+			go f(i)
+		}
+
+	}
+	wg.Wait()
+
+	for _, e := range ret {
+		if e == graphql.Null {
+			return graphql.Null
+		}
+	}
+
+	return ret
+}
+
+func (ec *executionContext) marshalNProductResult2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductResult(ctx context.Context, sel ast.SelectionSet, v models.ProductResult) graphql.Marshaler {
+	return ec._ProductResult(ctx, sel, &v)
+}
+
+func (ec *executionContext) marshalNProductResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductResult(ctx context.Context, sel ast.SelectionSet, v *models.ProductResult) graphql.Marshaler {
+	if v == nil {
+		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
+			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
+		}
+		return graphql.Null
+	}
+	return ec._ProductResult(ctx, sel, v)
 }
 
 func (ec *executionContext) marshalNRoom2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐRoom(ctx context.Context, sel ast.SelectionSet, v models.Room) graphql.Marshaler {
@@ -7851,6 +12842,27 @@ func (ec *executionContext) marshalN__TypeKind2string(ctx context.Context, sel a
 	return res
 }
 
+func (ec *executionContext) unmarshalNupdateProductInput2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐUpdateProductInput(ctx context.Context, v interface{}) (models.UpdateProductInput, error) {
+	res, err := ec.unmarshalInputupdateProductInput(ctx, v)
+	return res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOAuctionFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐAuctionFilter(ctx context.Context, v interface{}) (*models.AuctionFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputAuctionFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOBidStepTableFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableFilter(ctx context.Context, v interface{}) (*models.BidStepTableFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputBidStepTableFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOBoolean2bool(ctx context.Context, v interface{}) (bool, error) {
 	res, err := graphql.UnmarshalBoolean(v)
 	return res, graphql.ErrorOnPath(ctx, err)
@@ -7885,6 +12897,22 @@ func (ec *executionContext) unmarshalOConsumerFilter2ᚖiu7ᚑ2022ᚑsdᚑlabs�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
+func (ec *executionContext) unmarshalODateTime2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalString(v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalODateTime2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalString(*v)
+	return res
+}
+
 func (ec *executionContext) unmarshalODict2map(ctx context.Context, v interface{}) (map[string]string, error) {
 	if v == nil {
 		return nil, nil
@@ -7899,6 +12927,22 @@ func (ec *executionContext) marshalODict2map(ctx context.Context, sel ast.Select
 	}
 	res := models.MarshalDict(v)
 	return res
+}
+
+func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := graphql.UnmarshalFloatContext(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
+	if v == nil {
+		return graphql.Null
+	}
+	res := graphql.MarshalFloatContext(*v)
+	return graphql.WrapContextMarshaler(ctx, res)
 }
 
 func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {
@@ -7987,11 +13031,27 @@ func (ec *executionContext) marshalOMap2map(ctx context.Context, sel ast.Selecti
 	return res
 }
 
+func (ec *executionContext) unmarshalOOfferFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOfferFilter(ctx context.Context, v interface{}) (*models.OfferFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputOfferFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
 func (ec *executionContext) unmarshalOOrganizerFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOrganizerFilter(ctx context.Context, v interface{}) (*models.OrganizerFilter, error) {
 	if v == nil {
 		return nil, nil
 	}
 	res, err := ec.unmarshalInputOrganizerFilter(ctx, v)
+	return &res, graphql.ErrorOnPath(ctx, err)
+}
+
+func (ec *executionContext) unmarshalOProductFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐProductFilter(ctx context.Context, v interface{}) (*models.ProductFilter, error) {
+	if v == nil {
+		return nil, nil
+	}
+	res, err := ec.unmarshalInputProductFilter(ctx, v)
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 

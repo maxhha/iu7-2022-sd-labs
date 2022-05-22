@@ -15,6 +15,7 @@ type Resolver struct {
 	organizerInteractor interactors.OrganizerInteractor
 	consumerInteractor  interactors.ConsumerInteractor
 	roomInteractor      interactors.RoomInteractor
+	productInteractor   interactors.ProductInteractor
 	auth                ports.Auth
 	dataloader          ports.DataLoader
 	eventBus            bus.EventBus
@@ -25,6 +26,7 @@ func New(
 	organizerInteractor interactors.OrganizerInteractor,
 	consumerInteractor interactors.ConsumerInteractor,
 	roomInteractor interactors.RoomInteractor,
+	productInteractor interactors.ProductInteractor,
 	auth ports.Auth,
 	dataloader ports.DataLoader,
 	eventBus bus.EventBus,
@@ -34,6 +36,7 @@ func New(
 		organizerInteractor,
 		consumerInteractor,
 		roomInteractor,
+		productInteractor,
 		auth,
 		dataloader,
 		eventBus,

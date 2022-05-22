@@ -20,6 +20,10 @@ func (r *consumerResolver) Rooms(ctx context.Context, obj *models.Consumer, firs
 	return r.generatedPagination__Rooms(ctx, first, after, filter)
 }
 
+func (r *consumerResolver) Offers(ctx context.Context, obj *models.Consumer, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *mutationResolver) CreateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.TokenResult, error) {
 	ent, err := r.consumerInteractor.Create(nickname, form)
 	if err != nil {
@@ -85,9 +89,5 @@ func (r *Resolver) Consumer() generated.ConsumerResolver { return &consumerResol
 // Mutation returns generated.MutationResolver implementation.
 func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
 
-// Query returns generated.QueryResolver implementation.
-func (r *Resolver) Query() generated.QueryResolver { return &queryResolver{r} }
-
 type consumerResolver struct{ *Resolver }
 type mutationResolver struct{ *Resolver }
-type queryResolver struct{ *Resolver }

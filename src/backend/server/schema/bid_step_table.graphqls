@@ -9,3 +9,31 @@ type BidStepTable {
   organizer: Organizer!
   rows: [BidStepRow!]!
 }
+
+type BidStepTableResult {
+  bidStepTable: BidStepTable!
+}
+
+type BidStepTableConnectionEdge {
+  cursor: ID!
+  node: BidStepTable!
+}
+
+type BidStepTableConnection {
+  pageInfo: PageInfo!
+  edges: [BidStepTableConnectionEdge!]!
+}
+
+input BidStepTableFilter {
+  ids: [ID!]
+  name: String
+  organizers: [ID!]
+}
+
+extend type Query {
+  bidStepTables(
+    first: Int
+    after: ID
+    filter: BidStepTableFilter
+  ): BidStepTableConnection!
+}

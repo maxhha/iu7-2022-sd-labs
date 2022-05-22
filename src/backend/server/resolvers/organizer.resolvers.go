@@ -51,6 +51,10 @@ func (r *organizerResolver) BidStepTables(ctx context.Context, obj *models.Organ
 	panic(fmt.Errorf("not implemented"))
 }
 
+func (r *organizerResolver) Products(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error) {
+	panic(fmt.Errorf("not implemented"))
+}
+
 func (r *queryResolver) Organizers(ctx context.Context, first *int, after *string, filter *models.OrganizerFilter) (*models.OrganizerConnection, error) {
 	return r.generatedPagination__Organizers(ctx, first, after, filter)
 }

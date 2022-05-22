@@ -1,0 +1,34 @@
+type Auction {
+  id: ID!
+  room: Room!
+  product: Product!
+  bidStepTable: BidStepTable!
+  minAmount: Float
+  startedAt: DateTime!
+  finishedAt: DateTime
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
+}
+
+type AuctionResult {
+  auction: Auction!
+}
+
+type AuctionConnectionEdge {
+  cursor: ID!
+  node: Auction!
+}
+
+type AuctionConnection {
+  pageInfo: PageInfo!
+  edges: [AuctionConnectionEdge!]!
+}
+
+input AuctionFilter {
+  ids: [ID!]
+  rooms: [ID!]
+  products: [ID!]
+}
+
+extend type Query {
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
+}

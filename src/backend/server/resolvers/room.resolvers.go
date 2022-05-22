@@ -5,6 +5,7 @@ package resolvers
 
 import (
 	"context"
+	"fmt"
 	"iu7-2022-sd-labs/buisness/ports/bus"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
@@ -70,6 +71,10 @@ func (r *roomResolver) Consumers(ctx context.Context, obj *models.Room) ([]model
 	}
 
 	return models.ConsumerArrayFromEntites(consumers), nil
+}
+
+func (r *roomResolver) Auctions(ctx context.Context, obj *models.Room, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error) {
+	panic(fmt.Errorf("not implemented"))
 }
 
 func (r *subscriptionResolver) ConsumersInRoomUpdated(ctx context.Context, roomID string) (<-chan *models.Room, error) {

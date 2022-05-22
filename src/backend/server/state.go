@@ -45,6 +45,7 @@ type ServerState struct {
 	consumerInteractor           *interactors.ConsumerInteractor
 	organizerInteractor          *interactors.OrganizerInteractor
 	roomInteractor               *interactors.RoomInteractor
+	productInteractor            *interactors.ProductInteractor
 	resolver                     *resolvers.Resolver
 	schema                       graphql.ExecutableSchema
 	graphqlConfig                configuration.GraphQLHandlerConfig
@@ -157,6 +158,9 @@ func (s *ServerState) update(config *configuration.ConfigurationState) (*ServerS
 		return nil, Wrap(err, "update consumer interactor")
 	}
 	if err := nextState.updateRoomInteractor(s, config); err != nil {
+		return nil, Wrap(err, "update room interactor")
+	}
+	if err := nextState.updateProductInteractor(s, config); err != nil {
 		return nil, Wrap(err, "update room interactor")
 	}
 	if err := nextState.updateResolver(s, config); err != nil {
@@ -400,6 +404,19 @@ func (s *ServerState) updateRoomInteractor(prev *ServerState, config *configurat
 	return nil
 }
 
+func (s *ServerState) updateProductInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	shouldReset := repoChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	productInteractor := interactors.NewProductInteractor(s.repo.Organizer(), s.repo.Product())
+	s.productInteractor = &productInteractor
+	return nil
+}
+
 func (s *ServerState) updateResolver(prev *ServerState, config *configuration.ConfigurationState) error {
 	organizerInteractorChanged := s.organizerInteractor != prev.organizerInteractor
 	consumerInteractorChanged := s.consumerInteractor != prev.consumerInteractor
@@ -422,6 +439,7 @@ func (s *ServerState) updateResolver(prev *ServerState, config *configuration.Co
 		s.organizerInteractor,
 		s.consumerInteractor,
 		s.roomInteractor,
+		s.productInteractor,
 		s.auth,
 		s.dataloader,
 		s.eventBus,

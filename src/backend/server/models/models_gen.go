@@ -6,16 +6,44 @@ type Viewer interface {
 	IsViewer()
 }
 
-type BidStepRow struct {
-	FromAmount float64 `json:"fromAmount"`
-	Step       float64 `json:"step"`
+type AuctionConnection struct {
+	PageInfo *PageInfo               `json:"pageInfo"`
+	Edges    []AuctionConnectionEdge `json:"edges"`
 }
 
-type BidStepTable struct {
-	ID        string       `json:"id"`
-	Name      string       `json:"name"`
-	Organizer *Organizer   `json:"organizer"`
-	Rows      []BidStepRow `json:"rows"`
+type AuctionConnectionEdge struct {
+	Cursor string   `json:"cursor"`
+	Node   *Auction `json:"node"`
+}
+
+type AuctionFilter struct {
+	Ids      []string `json:"ids"`
+	Rooms    []string `json:"rooms"`
+	Products []string `json:"products"`
+}
+
+type AuctionResult struct {
+	Auction *Auction `json:"auction"`
+}
+
+type BidStepTableConnection struct {
+	PageInfo *PageInfo                    `json:"pageInfo"`
+	Edges    []BidStepTableConnectionEdge `json:"edges"`
+}
+
+type BidStepTableConnectionEdge struct {
+	Cursor string        `json:"cursor"`
+	Node   *BidStepTable `json:"node"`
+}
+
+type BidStepTableFilter struct {
+	Ids        []string `json:"ids"`
+	Name       *string  `json:"name"`
+	Organizers []string `json:"organizers"`
+}
+
+type BidStepTableResult struct {
+	BidStepTable *BidStepTable `json:"bidStepTable"`
 }
 
 type ConsumerConnection struct {
@@ -36,6 +64,26 @@ type ConsumerFilter struct {
 
 type ConsumerResult struct {
 	Consumer *Consumer `json:"consumer"`
+}
+
+type OfferConnection struct {
+	PageInfo *PageInfo             `json:"pageInfo"`
+	Edges    []OfferConnectionEdge `json:"edges"`
+}
+
+type OfferConnectionEdge struct {
+	Cursor string `json:"cursor"`
+	Node   *Offer `json:"node"`
+}
+
+type OfferFilter struct {
+	Ids       []string `json:"ids"`
+	Consumers []string `json:"consumers"`
+	Auctions  []string `json:"auctions"`
+}
+
+type OfferResult struct {
+	Offer *Offer `json:"offer"`
 }
 
 type OrganizerConnection struct {
@@ -64,6 +112,26 @@ type PageInfo struct {
 	EndCursor       *string `json:"endCursor"`
 }
 
+type ProductConnection struct {
+	PageInfo *PageInfo               `json:"pageInfo"`
+	Edges    []ProductConnectionEdge `json:"edges"`
+}
+
+type ProductConnectionEdge struct {
+	Cursor string   `json:"cursor"`
+	Node   *Product `json:"node"`
+}
+
+type ProductFilter struct {
+	Ids        []string `json:"ids"`
+	Name       *string  `json:"name"`
+	Organizers []string `json:"organizers"`
+}
+
+type ProductResult struct {
+	Product *Product `json:"product"`
+}
+
 type RoomConnection struct {
 	PageInfo *PageInfo            `json:"pageInfo"`
 	Edges    []RoomConnectionEdge `json:"edges"`
@@ -84,4 +152,9 @@ type RoomFilter struct {
 
 type RoomResult struct {
 	Room *Room `json:"room"`
+}
+
+type UpdateProductInput struct {
+	ProductID string `json:"productId"`
+	Name      string `json:"name"`
 }

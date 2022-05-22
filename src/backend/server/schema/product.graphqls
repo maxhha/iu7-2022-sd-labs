@@ -1,0 +1,41 @@
+type Product {
+  id: ID!
+  name: String!
+  organizer: Organizer!
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
+}
+
+type ProductResult {
+  product: Product!
+}
+
+type ProductConnectionEdge {
+  cursor: ID!
+  node: Product!
+}
+
+type ProductConnection {
+  pageInfo: PageInfo!
+  edges: [ProductConnectionEdge!]!
+}
+
+input ProductFilter {
+  ids: [ID!]
+  name: String
+  organizers: [ID!]
+}
+
+extend type Query {
+  products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
+}
+
+input updateProductInput {
+  productId: ID!
+  name: String!
+}
+
+extend type Mutation {
+  createProduct(name: String!): ProductResult!
+  deleteProduct(productId: ID!): Boolean!
+  updateProduct(input: updateProductInput!): ProductResult!
+}

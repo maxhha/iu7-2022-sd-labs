@@ -1,0 +1,31 @@
+type Offer {
+  id: ID!
+  consumer: Consumer!
+  auction: Auction!
+  amount: Float!
+  createdAt: DateTime!
+}
+
+type OfferResult {
+  offer: Offer!
+}
+
+type OfferConnectionEdge {
+  cursor: ID!
+  node: Offer!
+}
+
+type OfferConnection {
+  pageInfo: PageInfo!
+  edges: [OfferConnectionEdge!]!
+}
+
+input OfferFilter {
+  ids: [ID!]
+  consumers: [ID!]
+  auctions: [ID!]
+}
+
+extend type Query {
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
+}
