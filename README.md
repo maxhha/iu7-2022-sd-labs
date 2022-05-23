@@ -75,3 +75,13 @@ Classic Auction Assistant
 ## UML диаграммы «модельных» классов сущностей
 
 ![UML диаграммы «модельных» классов сущностей](./docs/uml-lab02-3.drawio.svg)
+
+## UML-диаграммы классов для модуля, связывающего GUI и бизнес-логику
+
+![UML-диаграммы классов для модуля, связывающего GUI и бизнес-логику](./docs/uml-lab05-1.drawio.svg)
+
+## Программная реализация технологического UI
+
+Технологический UI предоставлен [GraphiQL](https://github.com/graphql/graphiql) - GraphQL интегрированная среда разработки. Она доступна по пути `/graphiql`. Пример работы GraphiQL:
+
+![Пример работы GraphiQL](https://raw.githubusercontent.com/graphql/graphiql/main/packages/graphiql/resources/graphiql.jpg)
