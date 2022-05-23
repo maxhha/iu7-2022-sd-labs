@@ -51,7 +51,7 @@ type ServerState struct {
 	organizerInteractor          *interactors.OrganizerInteractor
 	productInteractor            *interactors.ProductInteractor
 	roomInteractor               *interactors.RoomInteractor
-	resolver                     *resolvers.Resolver
+	resolver                     generated.ResolverRoot
 	schema                       graphql.ExecutableSchema
 	graphqlConfig                configuration.GraphQLHandlerConfig
 	graphqlHandeler              gin.HandlerFunc
