@@ -5,6 +5,7 @@ package generated
 import (
 	"bytes"
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"io"
@@ -12,9 +13,11 @@ import (
 	"strconv"
 	"sync"
 	"sync/atomic"
+	"time"
 
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/introspection"
+	"github.com/shopspring/decimal"
 	gqlparser "github.com/vektah/gqlparser/v2"
 	"github.com/vektah/gqlparser/v2/ast"
 )
@@ -38,7 +41,6 @@ type Config struct {
 
 type ResolverRoot interface {
 	Auction() AuctionResolver
-	BidStepRow() BidStepRowResolver
 	BidStepTable() BidStepTableResolver
 	Consumer() ConsumerResolver
 	Mutation() MutationResolver
@@ -164,7 +166,7 @@ type ComplexityRoot struct {
 	}
 
 	Organizer struct {
-		BidStepTables func(childComplexity int) int
+		BidStepTables func(childComplexity int, first *int, after *string, filter *models.BidStepTableFilter) int
 		ID            func(childComplexity int) int
 		Name          func(childComplexity int) int
 		Products      func(childComplexity int, first *int, after *string, filter *models.ProductFilter) int
@@ -259,14 +261,8 @@ type AuctionResolver interface {
 	Room(ctx context.Context, obj *models.Auction) (*models.Room, error)
 	Product(ctx context.Context, obj *models.Auction) (*models.Product, error)
 	BidStepTable(ctx context.Context, obj *models.Auction) (*models.BidStepTable, error)
-	MinAmount(ctx context.Context, obj *models.Auction) (*float64, error)
-	StartedAt(ctx context.Context, obj *models.Auction) (string, error)
-	FinishedAt(ctx context.Context, obj *models.Auction) (*string, error)
+
 	Offers(ctx context.Context, obj *models.Auction, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error)
-}
-type BidStepRowResolver interface {
-	FromAmount(ctx context.Context, obj *models.BidStepRow) (float64, error)
-	Step(ctx context.Context, obj *models.BidStepRow) (float64, error)
 }
 type BidStepTableResolver interface {
 	Organizer(ctx context.Context, obj *models.BidStepTable) (*models.Organizer, error)
@@ -291,11 +287,9 @@ type MutationResolver interface {
 type OfferResolver interface {
 	Consumer(ctx context.Context, obj *models.Offer) (*models.Consumer, error)
 	Auction(ctx context.Context, obj *models.Offer) (*models.Auction, error)
-	Amount(ctx context.Context, obj *models.Offer) (float64, error)
-	CreatedAt(ctx context.Context, obj *models.Offer) (string, error)
 }
 type OrganizerResolver interface {
-	BidStepTables(ctx context.Context, obj *models.Organizer) ([]models.BidStepTable, error)
+	BidStepTables(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.BidStepTableFilter) (*models.BidStepTableConnection, error)
 	Products(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error)
 }
 type ProductResolver interface {
@@ -796,7 +790,12 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 			break
 		}
 
-		return e.complexity.Organizer.BidStepTables(childComplexity), true
+		args, err := ec.field_Organizer_bidStepTables_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Organizer.BidStepTables(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.BidStepTableFilter)), true
 
 	case "Organizer.id":
 		if e.complexity.Organizer.ID == nil {
@@ -1404,7 +1403,11 @@ extend type Query {
 	{Name: "server/schema/organizer.graphqls", Input: `type Organizer {
   id: ID!
   name: String!
-  bidStepTables: [BidStepTable!]!
+  bidStepTables(
+    first: Int
+    after: ID
+    filter: BidStepTableFilter
+  ): BidStepTableConnection!
   products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
 }
 
@@ -1827,6 +1830,39 @@ func (ec *executionContext) field_Mutation_updateProduct_args(ctx context.Contex
 		}
 	}
 	args["input"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Organizer_bidStepTables_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 *int
+	if tmp, ok := rawArgs["first"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("first"))
+		arg0, err = ec.unmarshalOInt2ᚖint(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["first"] = arg0
+	var arg1 *string
+	if tmp, ok := rawArgs["after"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("after"))
+		arg1, err = ec.unmarshalOID2ᚖstring(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["after"] = arg1
+	var arg2 *models.BidStepTableFilter
+	if tmp, ok := rawArgs["filter"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("filter"))
+		arg2, err = ec.unmarshalOBidStepTableFilter2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableFilter(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["filter"] = arg2
 	return args, nil
 }
 
@@ -2452,7 +2488,7 @@ func (ec *executionContext) _Auction_minAmount(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Auction().MinAmount(rctx, obj)
+		return obj.MinAmount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2461,17 +2497,17 @@ func (ec *executionContext) _Auction_minAmount(ctx context.Context, field graphq
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*float64)
+	res := resTmp.(decimal.NullDecimal)
 	fc.Result = res
-	return ec.marshalOFloat2ᚖfloat64(ctx, field.Selections, res)
+	return ec.marshalOFloat2githubᚗcomᚋshopspringᚋdecimalᚐNullDecimal(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Auction_minAmount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Auction",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -2493,7 +2529,7 @@ func (ec *executionContext) _Auction_startedAt(ctx context.Context, field graphq
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Auction().StartedAt(rctx, obj)
+		return obj.StartedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2505,17 +2541,17 @@ func (ec *executionContext) _Auction_startedAt(ctx context.Context, field graphq
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+	return ec.marshalNDateTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Auction_startedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Auction",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type DateTime does not have child fields")
 		},
@@ -2537,7 +2573,7 @@ func (ec *executionContext) _Auction_finishedAt(ctx context.Context, field graph
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Auction().FinishedAt(rctx, obj)
+		return obj.FinishedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2546,17 +2582,17 @@ func (ec *executionContext) _Auction_finishedAt(ctx context.Context, field graph
 	if resTmp == nil {
 		return graphql.Null
 	}
-	res := resTmp.(*string)
+	res := resTmp.(sql.NullTime)
 	fc.Result = res
-	return ec.marshalODateTime2ᚖstring(ctx, field.Selections, res)
+	return ec.marshalODateTime2databaseᚋsqlᚐNullTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Auction_finishedAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Auction",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type DateTime does not have child fields")
 		},
@@ -2911,7 +2947,7 @@ func (ec *executionContext) _BidStepRow_fromAmount(ctx context.Context, field gr
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.BidStepRow().FromAmount(rctx, obj)
+		return obj.FromAmount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2923,17 +2959,17 @@ func (ec *executionContext) _BidStepRow_fromAmount(ctx context.Context, field gr
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(decimal.Decimal)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNFloat2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BidStepRow_fromAmount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BidStepRow",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -2955,7 +2991,7 @@ func (ec *executionContext) _BidStepRow_step(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.BidStepRow().Step(rctx, obj)
+		return obj.Step, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -2967,17 +3003,17 @@ func (ec *executionContext) _BidStepRow_step(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(decimal.Decimal)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNFloat2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_BidStepRow_step(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "BidStepRow",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -4753,7 +4789,7 @@ func (ec *executionContext) _Offer_amount(ctx context.Context, field graphql.Col
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Offer().Amount(rctx, obj)
+		return obj.Amount, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4765,17 +4801,17 @@ func (ec *executionContext) _Offer_amount(ctx context.Context, field graphql.Col
 		}
 		return graphql.Null
 	}
-	res := resTmp.(float64)
+	res := resTmp.(decimal.Decimal)
 	fc.Result = res
-	return ec.marshalNFloat2float64(ctx, field.Selections, res)
+	return ec.marshalNFloat2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Offer_amount(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Offer",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type Float does not have child fields")
 		},
@@ -4797,7 +4833,7 @@ func (ec *executionContext) _Offer_createdAt(ctx context.Context, field graphql.
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Offer().CreatedAt(rctx, obj)
+		return obj.CreatedAt, nil
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -4809,17 +4845,17 @@ func (ec *executionContext) _Offer_createdAt(ctx context.Context, field graphql.
 		}
 		return graphql.Null
 	}
-	res := resTmp.(string)
+	res := resTmp.(time.Time)
 	fc.Result = res
-	return ec.marshalNDateTime2string(ctx, field.Selections, res)
+	return ec.marshalNDateTime2timeᚐTime(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Offer_createdAt(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
 	fc = &graphql.FieldContext{
 		Object:     "Offer",
 		Field:      field,
-		IsMethod:   true,
-		IsResolver: true,
+		IsMethod:   false,
+		IsResolver: false,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			return nil, errors.New("field of type DateTime does not have child fields")
 		},
@@ -5189,7 +5225,7 @@ func (ec *executionContext) _Organizer_bidStepTables(ctx context.Context, field 
 	}()
 	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
 		ctx = rctx // use context from middleware stack in children
-		return ec.resolvers.Organizer().BidStepTables(rctx, obj)
+		return ec.resolvers.Organizer().BidStepTables(rctx, obj, fc.Args["first"].(*int), fc.Args["after"].(*string), fc.Args["filter"].(*models.BidStepTableFilter))
 	})
 	if err != nil {
 		ec.Error(ctx, err)
@@ -5201,9 +5237,9 @@ func (ec *executionContext) _Organizer_bidStepTables(ctx context.Context, field 
 		}
 		return graphql.Null
 	}
-	res := resTmp.([]models.BidStepTable)
+	res := resTmp.(*models.BidStepTableConnection)
 	fc.Result = res
-	return ec.marshalNBidStepTable2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableᚄ(ctx, field.Selections, res)
+	return ec.marshalNBidStepTableConnection2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableConnection(ctx, field.Selections, res)
 }
 
 func (ec *executionContext) fieldContext_Organizer_bidStepTables(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
@@ -5214,17 +5250,24 @@ func (ec *executionContext) fieldContext_Organizer_bidStepTables(ctx context.Con
 		IsResolver: true,
 		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
 			switch field.Name {
-			case "id":
-				return ec.fieldContext_BidStepTable_id(ctx, field)
-			case "name":
-				return ec.fieldContext_BidStepTable_name(ctx, field)
-			case "organizer":
-				return ec.fieldContext_BidStepTable_organizer(ctx, field)
-			case "rows":
-				return ec.fieldContext_BidStepTable_rows(ctx, field)
+			case "pageInfo":
+				return ec.fieldContext_BidStepTableConnection_pageInfo(ctx, field)
+			case "edges":
+				return ec.fieldContext_BidStepTableConnection_edges(ctx, field)
 			}
-			return nil, fmt.Errorf("no field named %q was found under type BidStepTable", field.Name)
+			return nil, fmt.Errorf("no field named %q was found under type BidStepTableConnection", field.Name)
 		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Organizer_bidStepTables_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
 	}
 	return fc, nil
 }
@@ -9656,59 +9699,20 @@ func (ec *executionContext) _Auction(ctx context.Context, sel ast.SelectionSet, 
 
 			})
 		case "minAmount":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Auction_minAmount(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._Auction_minAmount(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "startedAt":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Auction_startedAt(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Auction_startedAt(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "finishedAt":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Auction_finishedAt(ctx, field, obj)
-				return res
-			}
+			out.Values[i] = ec._Auction_finishedAt(ctx, field, obj)
 
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "offers":
 			field := field
 
@@ -9849,45 +9853,19 @@ func (ec *executionContext) _BidStepRow(ctx context.Context, sel ast.SelectionSe
 		case "__typename":
 			out.Values[i] = graphql.MarshalString("BidStepRow")
 		case "fromAmount":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BidStepRow_fromAmount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BidStepRow_fromAmount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "step":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._BidStepRow_step(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._BidStepRow_step(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				invalids++
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -10423,45 +10401,19 @@ func (ec *executionContext) _Offer(ctx context.Context, sel ast.SelectionSet, ob
 
 			})
 		case "amount":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Offer_amount(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Offer_amount(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		case "createdAt":
-			field := field
 
-			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
-				defer func() {
-					if r := recover(); r != nil {
-						ec.Error(ctx, ec.Recover(ctx, r))
-					}
-				}()
-				res = ec._Offer_createdAt(ctx, field, obj)
-				if res == graphql.Null {
-					atomic.AddUint32(&invalids, 1)
-				}
-				return res
+			out.Values[i] = ec._Offer_createdAt(ctx, field, obj)
+
+			if out.Values[i] == graphql.Null {
+				atomic.AddUint32(&invalids, 1)
 			}
-
-			out.Concurrently(i, func() graphql.Marshaler {
-				return innerFunc(ctx)
-
-			})
 		default:
 			panic("unknown field " + strconv.Quote(field.Name))
 		}
@@ -11877,50 +11829,6 @@ func (ec *executionContext) marshalNBidStepTable2iu7ᚑ2022ᚑsdᚑlabsᚋserver
 	return ec._BidStepTable(ctx, sel, &v)
 }
 
-func (ec *executionContext) marshalNBidStepTable2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTableᚄ(ctx context.Context, sel ast.SelectionSet, v []models.BidStepTable) graphql.Marshaler {
-	ret := make(graphql.Array, len(v))
-	var wg sync.WaitGroup
-	isLen1 := len(v) == 1
-	if !isLen1 {
-		wg.Add(len(v))
-	}
-	for i := range v {
-		i := i
-		fc := &graphql.FieldContext{
-			Index:  &i,
-			Result: &v[i],
-		}
-		ctx := graphql.WithFieldContext(ctx, fc)
-		f := func(i int) {
-			defer func() {
-				if r := recover(); r != nil {
-					ec.Error(ctx, ec.Recover(ctx, r))
-					ret = nil
-				}
-			}()
-			if !isLen1 {
-				defer wg.Done()
-			}
-			ret[i] = ec.marshalNBidStepTable2iu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx, sel, v[i])
-		}
-		if isLen1 {
-			f(i)
-		} else {
-			go f(i)
-		}
-
-	}
-	wg.Wait()
-
-	for _, e := range ret {
-		if e == graphql.Null {
-			return graphql.Null
-		}
-	}
-
-	return ret
-}
-
 func (ec *executionContext) marshalNBidStepTable2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐBidStepTable(ctx context.Context, sel ast.SelectionSet, v *models.BidStepTable) graphql.Marshaler {
 	if v == nil {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
@@ -12142,13 +12050,13 @@ func (ec *executionContext) marshalNConsumerResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋs
 	return ec._ConsumerResult(ctx, sel, v)
 }
 
-func (ec *executionContext) unmarshalNDateTime2string(ctx context.Context, v interface{}) (string, error) {
-	res, err := graphql.UnmarshalString(v)
+func (ec *executionContext) unmarshalNDateTime2timeᚐTime(ctx context.Context, v interface{}) (time.Time, error) {
+	res, err := models.UnmarshalTime(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast.SelectionSet, v string) graphql.Marshaler {
-	res := graphql.MarshalString(v)
+func (ec *executionContext) marshalNDateTime2timeᚐTime(ctx context.Context, sel ast.SelectionSet, v time.Time) graphql.Marshaler {
+	res := models.MarshalTime(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
@@ -12157,19 +12065,19 @@ func (ec *executionContext) marshalNDateTime2string(ctx context.Context, sel ast
 	return res
 }
 
-func (ec *executionContext) unmarshalNFloat2float64(ctx context.Context, v interface{}) (float64, error) {
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
+func (ec *executionContext) unmarshalNFloat2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, v interface{}) (decimal.Decimal, error) {
+	res, err := models.UnmarshalDecimal(v)
 	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalNFloat2float64(ctx context.Context, sel ast.SelectionSet, v float64) graphql.Marshaler {
-	res := graphql.MarshalFloatContext(v)
+func (ec *executionContext) marshalNFloat2githubᚗcomᚋshopspringᚋdecimalᚐDecimal(ctx context.Context, sel ast.SelectionSet, v decimal.Decimal) graphql.Marshaler {
+	res := models.MarshalDecimal(v)
 	if res == graphql.Null {
 		if !graphql.HasFieldError(ctx, graphql.GetFieldContext(ctx)) {
 			ec.Errorf(ctx, "the requested element is null which the schema does not allow")
 		}
 	}
-	return graphql.WrapContextMarshaler(ctx, res)
+	return res
 }
 
 func (ec *executionContext) unmarshalNID2string(ctx context.Context, v interface{}) (string, error) {
@@ -12897,19 +12805,13 @@ func (ec *executionContext) unmarshalOConsumerFilter2ᚖiu7ᚑ2022ᚑsdᚑlabs�
 	return &res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) unmarshalODateTime2ᚖstring(ctx context.Context, v interface{}) (*string, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalString(v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) unmarshalODateTime2databaseᚋsqlᚐNullTime(ctx context.Context, v interface{}) (sql.NullTime, error) {
+	res, err := models.UnmarshalNullTime(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalODateTime2ᚖstring(ctx context.Context, sel ast.SelectionSet, v *string) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalString(*v)
+func (ec *executionContext) marshalODateTime2databaseᚋsqlᚐNullTime(ctx context.Context, sel ast.SelectionSet, v sql.NullTime) graphql.Marshaler {
+	res := models.MarshalNullTime(v)
 	return res
 }
 
@@ -12929,20 +12831,14 @@ func (ec *executionContext) marshalODict2map(ctx context.Context, sel ast.Select
 	return res
 }
 
-func (ec *executionContext) unmarshalOFloat2ᚖfloat64(ctx context.Context, v interface{}) (*float64, error) {
-	if v == nil {
-		return nil, nil
-	}
-	res, err := graphql.UnmarshalFloatContext(ctx, v)
-	return &res, graphql.ErrorOnPath(ctx, err)
+func (ec *executionContext) unmarshalOFloat2githubᚗcomᚋshopspringᚋdecimalᚐNullDecimal(ctx context.Context, v interface{}) (decimal.NullDecimal, error) {
+	res, err := models.UnmarshalNullDecimal(v)
+	return res, graphql.ErrorOnPath(ctx, err)
 }
 
-func (ec *executionContext) marshalOFloat2ᚖfloat64(ctx context.Context, sel ast.SelectionSet, v *float64) graphql.Marshaler {
-	if v == nil {
-		return graphql.Null
-	}
-	res := graphql.MarshalFloatContext(*v)
-	return graphql.WrapContextMarshaler(ctx, res)
+func (ec *executionContext) marshalOFloat2githubᚗcomᚋshopspringᚋdecimalᚐNullDecimal(ctx context.Context, sel ast.SelectionSet, v decimal.NullDecimal) graphql.Marshaler {
+	res := models.MarshalNullDecimal(v)
+	return res
 }
 
 func (ec *executionContext) unmarshalOID2ᚕstringᚄ(ctx context.Context, v interface{}) ([]string, error) {

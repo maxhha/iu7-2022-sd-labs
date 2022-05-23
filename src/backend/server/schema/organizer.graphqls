@@ -1,7 +1,11 @@
 type Organizer {
   id: ID!
   name: String!
-  bidStepTables: [BidStepTable!]!
+  bidStepTables(
+    first: Int
+    after: ID
+    filter: BidStepTableFilter
+  ): BidStepTableConnection!
   products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
 }
 

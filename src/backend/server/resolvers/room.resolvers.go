@@ -74,7 +74,11 @@ func (r *roomResolver) Consumers(ctx context.Context, obj *models.Room) ([]model
 }
 
 func (r *roomResolver) Auctions(ctx context.Context, obj *models.Room, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	if len(filter.Rooms) > 0 {
+		return nil, fmt.Errorf("filter rooms must be empty")
+	}
+	filter.Rooms = []string{obj.ID}
+	return r.generatedPagination__Auctions(ctx, first, after, filter)
 }
 
 func (r *subscriptionResolver) ConsumersInRoomUpdated(ctx context.Context, roomID string) (<-chan *models.Room, error) {

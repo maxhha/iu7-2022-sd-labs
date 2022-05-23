@@ -22,9 +22,13 @@ type DataLoader struct {
 }
 
 type loaders struct {
-	organizer *dataloader.Loader
-	room      *dataloader.Loader
-	consumer  *dataloader.Loader
+	auction      *dataloader.Loader
+	bidStepTable *dataloader.Loader
+	consumer     *dataloader.Loader
+	offer        *dataloader.Loader
+	organizer    *dataloader.Loader
+	product      *dataloader.Loader
+	room         *dataloader.Loader
 }
 
 func NewDataLoader(repo repositories.Repository) *DataLoader {
@@ -33,15 +37,15 @@ func NewDataLoader(repo repositories.Repository) *DataLoader {
 	}
 }
 
-func (l *DataLoader) organizerBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+func (l *DataLoader) auctionBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 	results := make([]*dataloader.Result, 0, len(keys))
 	ids := make([]string, 0, len(keys))
 	for _, key := range keys {
 		ids = append(ids, key.String())
 	}
 
-	ents, err := l.repo.Organizer().Find(&repositories.OrganizerFindParams{
-		Filter: &repositories.OrganizerFilter{IDs: ids},
+	ents, err := l.repo.Auction().Find(&repositories.AuctionFindParams{
+		Filter: &repositories.AuctionFilter{IDs: ids},
 	})
 
 	if err != nil {
@@ -75,15 +79,15 @@ func (l *DataLoader) organizerBatchFn(ctx context.Context, keys dataloader.Keys)
 	return results
 }
 
-func (l *DataLoader) roomBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+func (l *DataLoader) bidStepTableBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
 	results := make([]*dataloader.Result, 0, len(keys))
 	ids := make([]string, 0, len(keys))
 	for _, key := range keys {
 		ids = append(ids, key.String())
 	}
 
-	ents, err := l.repo.Room().Find(&repositories.RoomFindParams{
-		Filter: &repositories.RoomFilter{IDs: ids},
+	ents, err := l.repo.BidStepTable().Find(&repositories.BidStepTableFindParams{
+		Filter: &repositories.BidStepTableFilter{IDs: ids},
 	})
 
 	if err != nil {
@@ -159,13 +163,397 @@ func (l *DataLoader) consumerBatchFn(ctx context.Context, keys dataloader.Keys) 
 	return results
 }
 
+func (l *DataLoader) offerBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+	results := make([]*dataloader.Result, 0, len(keys))
+	ids := make([]string, 0, len(keys))
+	for _, key := range keys {
+		ids = append(ids, key.String())
+	}
+
+	ents, err := l.repo.Offer().Find(&repositories.OfferFindParams{
+		Filter: &repositories.OfferFilter{IDs: ids},
+	})
+
+	if err != nil {
+		result := dataloader.Result{
+			Error: err,
+		}
+
+		for i := 0; i < len(keys); i++ {
+			results = append(results, &result)
+		}
+
+		return results
+	}
+
+	entsMap := make(map[string]interface{}, len(ents))
+	for _, ent := range ents {
+		entsMap[ent.ID()] = ent
+	}
+
+	for _, id := range ids {
+		result := dataloader.Result{}
+		ent, ok := entsMap[id]
+		if ok {
+			result.Data = ent
+		} else {
+			result.Error = repositories.ErrNotFound
+		}
+		results = append(results, &result)
+	}
+
+	return results
+}
+
+func (l *DataLoader) organizerBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+	results := make([]*dataloader.Result, 0, len(keys))
+	ids := make([]string, 0, len(keys))
+	for _, key := range keys {
+		ids = append(ids, key.String())
+	}
+
+	ents, err := l.repo.Organizer().Find(&repositories.OrganizerFindParams{
+		Filter: &repositories.OrganizerFilter{IDs: ids},
+	})
+
+	if err != nil {
+		result := dataloader.Result{
+			Error: err,
+		}
+
+		for i := 0; i < len(keys); i++ {
+			results = append(results, &result)
+		}
+
+		return results
+	}
+
+	entsMap := make(map[string]interface{}, len(ents))
+	for _, ent := range ents {
+		entsMap[ent.ID()] = ent
+	}
+
+	for _, id := range ids {
+		result := dataloader.Result{}
+		ent, ok := entsMap[id]
+		if ok {
+			result.Data = ent
+		} else {
+			result.Error = repositories.ErrNotFound
+		}
+		results = append(results, &result)
+	}
+
+	return results
+}
+
+func (l *DataLoader) productBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+	results := make([]*dataloader.Result, 0, len(keys))
+	ids := make([]string, 0, len(keys))
+	for _, key := range keys {
+		ids = append(ids, key.String())
+	}
+
+	ents, err := l.repo.Product().Find(&repositories.ProductFindParams{
+		Filter: &repositories.ProductFilter{IDs: ids},
+	})
+
+	if err != nil {
+		result := dataloader.Result{
+			Error: err,
+		}
+
+		for i := 0; i < len(keys); i++ {
+			results = append(results, &result)
+		}
+
+		return results
+	}
+
+	entsMap := make(map[string]interface{}, len(ents))
+	for _, ent := range ents {
+		entsMap[ent.ID()] = ent
+	}
+
+	for _, id := range ids {
+		result := dataloader.Result{}
+		ent, ok := entsMap[id]
+		if ok {
+			result.Data = ent
+		} else {
+			result.Error = repositories.ErrNotFound
+		}
+		results = append(results, &result)
+	}
+
+	return results
+}
+
+func (l *DataLoader) roomBatchFn(ctx context.Context, keys dataloader.Keys) []*dataloader.Result {
+	results := make([]*dataloader.Result, 0, len(keys))
+	ids := make([]string, 0, len(keys))
+	for _, key := range keys {
+		ids = append(ids, key.String())
+	}
+
+	ents, err := l.repo.Room().Find(&repositories.RoomFindParams{
+		Filter: &repositories.RoomFilter{IDs: ids},
+	})
+
+	if err != nil {
+		result := dataloader.Result{
+			Error: err,
+		}
+
+		for i := 0; i < len(keys); i++ {
+			results = append(results, &result)
+		}
+
+		return results
+	}
+
+	entsMap := make(map[string]interface{}, len(ents))
+	for _, ent := range ents {
+		entsMap[ent.ID()] = ent
+	}
+
+	for _, id := range ids {
+		result := dataloader.Result{}
+		ent, ok := entsMap[id]
+		if ok {
+			result.Data = ent
+		} else {
+			result.Error = repositories.ErrNotFound
+		}
+		results = append(results, &result)
+	}
+
+	return results
+}
+
 func (f *DataLoader) WithNewLoader(ctx context.Context) context.Context {
 	return context.WithValue(ctx, loaderKey, loaders{
 
-		dataloader.NewBatchedLoader(f.organizerBatchFn),
-		dataloader.NewBatchedLoader(f.roomBatchFn),
+		dataloader.NewBatchedLoader(f.auctionBatchFn),
+		dataloader.NewBatchedLoader(f.bidStepTableBatchFn),
 		dataloader.NewBatchedLoader(f.consumerBatchFn),
+		dataloader.NewBatchedLoader(f.offerBatchFn),
+		dataloader.NewBatchedLoader(f.organizerBatchFn),
+		dataloader.NewBatchedLoader(f.productBatchFn),
+		dataloader.NewBatchedLoader(f.roomBatchFn),
 	})
+}
+
+func (l *DataLoader) LoadAuction(ctx context.Context, id string) (entities.Auction, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return entities.Auction{}, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.auction.Load(ctx, dataloader.StringKey(id))
+	obj, err := thunk()
+	if err != nil {
+		return entities.Auction{}, fmt.Errorf("auction loader thunk: %w", err)
+	}
+
+	ent, ok := obj.(entities.Auction)
+	if !ok {
+		return entities.Auction{}, fmt.Errorf(
+			"fail convert thunk result of type %T to Auction",
+			obj,
+		)
+	}
+
+	return ent, nil
+}
+
+func (l *DataLoader) LoadManyAuctions(ctx context.Context, ids []string) ([]entities.Auction, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.auction.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("auction loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Auction, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Auction)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Auction",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
+}
+
+func (l *DataLoader) LoadBidStepTable(ctx context.Context, id string) (entities.BidStepTable, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return entities.BidStepTable{}, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.bidStepTable.Load(ctx, dataloader.StringKey(id))
+	obj, err := thunk()
+	if err != nil {
+		return entities.BidStepTable{}, fmt.Errorf("bidStepTable loader thunk: %w", err)
+	}
+
+	ent, ok := obj.(entities.BidStepTable)
+	if !ok {
+		return entities.BidStepTable{}, fmt.Errorf(
+			"fail convert thunk result of type %T to BidStepTable",
+			obj,
+		)
+	}
+
+	return ent, nil
+}
+
+func (l *DataLoader) LoadManyBidStepTables(ctx context.Context, ids []string) ([]entities.BidStepTable, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.bidStepTable.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("bidStepTable loader thunk: %w", err)
+	}
+
+	ents := make([]entities.BidStepTable, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.BidStepTable)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to BidStepTable",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
+}
+
+func (l *DataLoader) LoadConsumer(ctx context.Context, id string) (entities.Consumer, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return entities.Consumer{}, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.consumer.Load(ctx, dataloader.StringKey(id))
+	obj, err := thunk()
+	if err != nil {
+		return entities.Consumer{}, fmt.Errorf("consumer loader thunk: %w", err)
+	}
+
+	ent, ok := obj.(entities.Consumer)
+	if !ok {
+		return entities.Consumer{}, fmt.Errorf(
+			"fail convert thunk result of type %T to Consumer",
+			obj,
+		)
+	}
+
+	return ent, nil
+}
+
+func (l *DataLoader) LoadManyConsumers(ctx context.Context, ids []string) ([]entities.Consumer, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.consumer.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("consumer loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Consumer, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Consumer)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Consumer",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
+}
+
+func (l *DataLoader) LoadOffer(ctx context.Context, id string) (entities.Offer, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return entities.Offer{}, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.offer.Load(ctx, dataloader.StringKey(id))
+	obj, err := thunk()
+	if err != nil {
+		return entities.Offer{}, fmt.Errorf("offer loader thunk: %w", err)
+	}
+
+	ent, ok := obj.(entities.Offer)
+	if !ok {
+		return entities.Offer{}, fmt.Errorf(
+			"fail convert thunk result of type %T to Offer",
+			obj,
+		)
+	}
+
+	return ent, nil
+}
+
+func (l *DataLoader) LoadManyOffers(ctx context.Context, ids []string) ([]entities.Offer, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.offer.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("offer loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Offer, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Offer)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Offer",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
 }
 
 func (l *DataLoader) LoadOrganizer(ctx context.Context, id string) (entities.Organizer, error) {
@@ -221,6 +609,59 @@ func (l *DataLoader) LoadManyOrganizers(ctx context.Context, ids []string) ([]en
 	return ents, nil
 }
 
+func (l *DataLoader) LoadProduct(ctx context.Context, id string) (entities.Product, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return entities.Product{}, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.product.Load(ctx, dataloader.StringKey(id))
+	obj, err := thunk()
+	if err != nil {
+		return entities.Product{}, fmt.Errorf("product loader thunk: %w", err)
+	}
+
+	ent, ok := obj.(entities.Product)
+	if !ok {
+		return entities.Product{}, fmt.Errorf(
+			"fail convert thunk result of type %T to Product",
+			obj,
+		)
+	}
+
+	return ent, nil
+}
+
+func (l *DataLoader) LoadManyProducts(ctx context.Context, ids []string) ([]entities.Product, error) {
+	loaders, ok := ctx.Value(loaderKey).(loaders)
+	if !ok {
+		return nil, fmt.Errorf("fail get loader from context")
+	}
+
+	thunk := loaders.product.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
+	objs, errs := thunk()
+
+	if errs != nil {
+		err := multierror.Append(nil, errs...)
+		return nil, fmt.Errorf("product loader thunk: %w", err)
+	}
+
+	ents := make([]entities.Product, 0, len(objs))
+	for _, obj := range objs {
+		ent, ok := obj.(entities.Product)
+		if !ok {
+			return nil, fmt.Errorf(
+				"fail convert thunk result of type %T to Product",
+				obj,
+			)
+		}
+
+		ents = append(ents, ent)
+	}
+
+	return ents, nil
+}
+
 func (l *DataLoader) LoadRoom(ctx context.Context, id string) (entities.Room, error) {
 	loaders, ok := ctx.Value(loaderKey).(loaders)
 	if !ok {
@@ -264,59 +705,6 @@ func (l *DataLoader) LoadManyRooms(ctx context.Context, ids []string) ([]entitie
 		if !ok {
 			return nil, fmt.Errorf(
 				"fail convert thunk result of type %T to Room",
-				obj,
-			)
-		}
-
-		ents = append(ents, ent)
-	}
-
-	return ents, nil
-}
-
-func (l *DataLoader) LoadConsumer(ctx context.Context, id string) (entities.Consumer, error) {
-	loaders, ok := ctx.Value(loaderKey).(loaders)
-	if !ok {
-		return entities.Consumer{}, fmt.Errorf("fail get loader from context")
-	}
-
-	thunk := loaders.consumer.Load(ctx, dataloader.StringKey(id))
-	obj, err := thunk()
-	if err != nil {
-		return entities.Consumer{}, fmt.Errorf("consumer loader thunk: %w", err)
-	}
-
-	ent, ok := obj.(entities.Consumer)
-	if !ok {
-		return entities.Consumer{}, fmt.Errorf(
-			"fail convert thunk result of type %T to Consumer",
-			obj,
-		)
-	}
-
-	return ent, nil
-}
-
-func (l *DataLoader) LoadManyConsumers(ctx context.Context, ids []string) ([]entities.Consumer, error) {
-	loaders, ok := ctx.Value(loaderKey).(loaders)
-	if !ok {
-		return nil, fmt.Errorf("fail get loader from context")
-	}
-
-	thunk := loaders.consumer.LoadMany(ctx, dataloader.NewKeysFromStrings(ids))
-	objs, errs := thunk()
-
-	if errs != nil {
-		err := multierror.Append(nil, errs...)
-		return nil, fmt.Errorf("consumer loader thunk: %w", err)
-	}
-
-	ents := make([]entities.Consumer, 0, len(objs))
-	for _, obj := range objs {
-		ent, ok := obj.(entities.Consumer)
-		if !ok {
-			return nil, fmt.Errorf(
-				"fail convert thunk result of type %T to Consumer",
 				obj,
 			)
 		}

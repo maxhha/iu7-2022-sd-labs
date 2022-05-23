@@ -21,7 +21,11 @@ func (r *consumerResolver) Rooms(ctx context.Context, obj *models.Consumer, firs
 }
 
 func (r *consumerResolver) Offers(ctx context.Context, obj *models.Consumer, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	if len(filter.Consumers) > 0 {
+		return nil, fmt.Errorf("filter consumers must be empty")
+	}
+	filter.Consumers = []string{obj.ID}
+	return r.generatedPagination__Offers(ctx, first, after, filter)
 }
 
 func (r *mutationResolver) CreateConsumer(ctx context.Context, nickname string, form map[string]interface{}) (*models.TokenResult, error) {

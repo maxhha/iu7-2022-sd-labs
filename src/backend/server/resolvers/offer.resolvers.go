@@ -5,29 +5,28 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
 )
 
 func (r *offerResolver) Consumer(ctx context.Context, obj *models.Offer) (*models.Consumer, error) {
-	panic(fmt.Errorf("not implemented"))
+	ent, err := r.dataloader.LoadConsumer(ctx, obj.ConsumerID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader.LoadConsumer")
+	}
+	return (&models.Consumer{}).From(&ent), nil
 }
 
 func (r *offerResolver) Auction(ctx context.Context, obj *models.Offer) (*models.Auction, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *offerResolver) Amount(ctx context.Context, obj *models.Offer) (float64, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *offerResolver) CreatedAt(ctx context.Context, obj *models.Offer) (string, error) {
-	panic(fmt.Errorf("not implemented"))
+	ent, err := r.dataloader.LoadAuction(ctx, obj.AuctionID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader.LoadAuction")
+	}
+	return (&models.Auction{}).From(&ent), nil
 }
 
 func (r *queryResolver) Offers(ctx context.Context, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.generatedPagination__Offers(ctx, first, after, filter)
 }
 
 // Offer returns generated.OfferResolver implementation.

@@ -47,12 +47,20 @@ func (r *mutationResolver) UpdateOrganizer(ctx context.Context, name string) (*m
 	}, nil
 }
 
-func (r *organizerResolver) BidStepTables(ctx context.Context, obj *models.Organizer) ([]models.BidStepTable, error) {
-	panic(fmt.Errorf("not implemented"))
+func (r *organizerResolver) BidStepTables(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.BidStepTableFilter) (*models.BidStepTableConnection, error) {
+	if len(filter.Organizers) > 0 {
+		return nil, fmt.Errorf("filter organizers must be empty")
+	}
+	filter.Organizers = []string{obj.ID}
+	return r.generatedPagination__BidStepTables(ctx, first, after, filter)
 }
 
 func (r *organizerResolver) Products(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	if len(filter.Organizers) > 0 {
+		return nil, fmt.Errorf("filter organizers must be empty")
+	}
+	filter.Organizers = []string{obj.ID}
+	return r.generatedPagination__Products(ctx, first, after, filter)
 }
 
 func (r *queryResolver) Organizers(ctx context.Context, first *int, after *string, filter *models.OrganizerFilter) (*models.OrganizerConnection, error) {

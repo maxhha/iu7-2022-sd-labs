@@ -60,13 +60,11 @@ models:
   Dict:
     model:
       - iu7-2022-sd-labs/server/models.Dict
-  # DateTime:
-  #   model:
-  #     - auction-back/models.Time
-  #     - auction-back/models.NullTime
-  # Float:
-  #   model:
-  #     - auction-back/models.Decimal
-  # Cursor:
-  #   model:
-  #     - github.com/99designs/gqlgen/graphql.String
+  DateTime:
+    model:
+      - iu7-2022-sd-labs/server/models.Time
+      - iu7-2022-sd-labs/server/models.NullTime
+  Float:
+    model:
+      - iu7-2022-sd-labs/server/models.Decimal
+      - iu7-2022-sd-labs/server/models.NullDecimal

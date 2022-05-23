@@ -12,31 +12,40 @@ import (
 // It serves as dependency injection for your app, add any dependencies you require here.
 
 type Resolver struct {
-	organizerInteractor interactors.OrganizerInteractor
-	consumerInteractor  interactors.ConsumerInteractor
-	roomInteractor      interactors.RoomInteractor
-	productInteractor   interactors.ProductInteractor
-	auth                ports.Auth
-	dataloader          ports.DataLoader
-	eventBus            bus.EventBus
-	logger              *log.Logger
+	auctionInteractor      interactors.AuctionInteractor
+	bidStepTableInteractor interactors.BidStepTableInteractor
+	consumerInteractor     interactors.ConsumerInteractor
+	offerInteractor        interactors.OfferInteractor
+	organizerInteractor    interactors.OrganizerInteractor
+	productInteractor      interactors.ProductInteractor
+	roomInteractor         interactors.RoomInteractor
+	auth                   ports.Auth
+	dataloader             ports.DataLoader
+	eventBus               bus.EventBus
+	logger                 *log.Logger
 }
 
 func New(
-	organizerInteractor interactors.OrganizerInteractor,
+	auctionInteractor interactors.AuctionInteractor,
+	bidStepTableInteractor interactors.BidStepTableInteractor,
 	consumerInteractor interactors.ConsumerInteractor,
-	roomInteractor interactors.RoomInteractor,
+	offerInteractor interactors.OfferInteractor,
+	organizerInteractor interactors.OrganizerInteractor,
 	productInteractor interactors.ProductInteractor,
+	roomInteractor interactors.RoomInteractor,
 	auth ports.Auth,
 	dataloader ports.DataLoader,
 	eventBus bus.EventBus,
 	logger *log.Logger,
 ) Resolver {
 	return Resolver{
-		organizerInteractor,
+		auctionInteractor,
+		bidStepTableInteractor,
 		consumerInteractor,
-		roomInteractor,
+		offerInteractor,
+		organizerInteractor,
 		productInteractor,
+		roomInteractor,
 		auth,
 		dataloader,
 		eventBus,

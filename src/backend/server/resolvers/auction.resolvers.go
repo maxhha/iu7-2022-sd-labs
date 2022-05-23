@@ -11,35 +11,42 @@ import (
 )
 
 func (r *auctionResolver) Room(ctx context.Context, obj *models.Auction) (*models.Room, error) {
-	panic(fmt.Errorf("not implemented"))
+	ent, err := r.dataloader.LoadRoom(ctx, obj.RoomID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader loadRoom")
+	}
+
+	return (&models.Room{}).From(&ent), nil
 }
 
 func (r *auctionResolver) Product(ctx context.Context, obj *models.Auction) (*models.Product, error) {
-	panic(fmt.Errorf("not implemented"))
+	ent, err := r.dataloader.LoadProduct(ctx, obj.ProductID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader loadProduct")
+	}
+
+	return (&models.Product{}).From(&ent), nil
 }
 
 func (r *auctionResolver) BidStepTable(ctx context.Context, obj *models.Auction) (*models.BidStepTable, error) {
-	panic(fmt.Errorf("not implemented"))
-}
+	ent, err := r.dataloader.LoadBidStepTable(ctx, obj.BidStepTableID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader loadBidStepTable")
+	}
 
-func (r *auctionResolver) MinAmount(ctx context.Context, obj *models.Auction) (*float64, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *auctionResolver) StartedAt(ctx context.Context, obj *models.Auction) (string, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *auctionResolver) FinishedAt(ctx context.Context, obj *models.Auction) (*string, error) {
-	panic(fmt.Errorf("not implemented"))
+	return (&models.BidStepTable{}).From(&ent), nil
 }
 
 func (r *auctionResolver) Offers(ctx context.Context, obj *models.Auction, first *int, after *string, filter *models.OfferFilter) (*models.OfferConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	if len(filter.Auctions) > 0 {
+		return nil, fmt.Errorf("filter auctions must be empty")
+	}
+	filter.Auctions = []string{obj.ID}
+	return r.generatedPagination__Offers(ctx, first, after, filter)
 }
 
 func (r *queryResolver) Auctions(ctx context.Context, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.generatedPagination__Auctions(ctx, first, after, filter)
 }
 
 // Auction returns generated.AuctionResolver implementation.

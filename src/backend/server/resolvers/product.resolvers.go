@@ -36,15 +36,23 @@ func (r *mutationResolver) UpdateProduct(ctx context.Context, input models.Updat
 }
 
 func (r *productResolver) Organizer(ctx context.Context, obj *models.Product) (*models.Organizer, error) {
-	panic(fmt.Errorf("not implemented"))
+	ent, err := r.dataloader.LoadOrganizer(ctx, obj.OrganizerID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader.LoadOrganizer")
+	}
+	return (&models.Organizer{}).From(&ent), nil
 }
 
 func (r *productResolver) Auctions(ctx context.Context, obj *models.Product, first *int, after *string, filter *models.AuctionFilter) (*models.AuctionConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	if len(filter.Products) > 0 {
+		return nil, fmt.Errorf("filter products must be empty")
+	}
+	filter.Products = []string{obj.ID}
+	return r.generatedPagination__Auctions(ctx, first, after, filter)
 }
 
 func (r *queryResolver) Products(ctx context.Context, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.generatedPagination__Products(ctx, first, after, filter)
 }
 
 // Product returns generated.ProductResolver implementation.

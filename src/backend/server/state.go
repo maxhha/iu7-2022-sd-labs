@@ -7,6 +7,7 @@ import (
 	"iu7-2022-sd-labs/adapters/event_bus"
 	"iu7-2022-sd-labs/adapters/gorm_repositories"
 	"iu7-2022-sd-labs/adapters/jwt_auth"
+	"iu7-2022-sd-labs/adapters/offer_pay_service"
 	"iu7-2022-sd-labs/app"
 	"iu7-2022-sd-labs/buisness/interactors"
 	"iu7-2022-sd-labs/buisness/ports/services"
@@ -42,10 +43,14 @@ type ServerState struct {
 	auth                         *jwt_auth.JWTAuth
 	consumerFormValidatorService services.ConsumerFormValidatorService
 	eventBus                     *event_bus.EventBus
+	offerPayService              *offer_pay_service.OfferPayService
+	auctionInteractor            *interactors.AuctionInteractor
+	bidStepTableInteractor       *interactors.BidStepTableInteractor
 	consumerInteractor           *interactors.ConsumerInteractor
+	offerInteractor              *interactors.OfferInteractor
 	organizerInteractor          *interactors.OrganizerInteractor
-	roomInteractor               *interactors.RoomInteractor
 	productInteractor            *interactors.ProductInteractor
+	roomInteractor               *interactors.RoomInteractor
 	resolver                     *resolvers.Resolver
 	schema                       graphql.ExecutableSchema
 	graphqlConfig                configuration.GraphQLHandlerConfig
@@ -76,6 +81,7 @@ func NewServerState(configuration *configuration.Configuration) (*ServerState, e
 	errorChan := make(chan error)
 	eventBus := event_bus.NewEventBus()
 	consumerFormValidator := consumer_validator.NewConsumerFormValidatorService()
+	offerPayService := offer_pay_service.NewOfferPayService()
 
 	s := &ServerState{
 		logger:                       logger,
@@ -83,6 +89,7 @@ func NewServerState(configuration *configuration.Configuration) (*ServerState, e
 		serverErrorChan:              errorChan,
 		eventBus:                     &eventBus,
 		consumerFormValidatorService: &consumerFormValidator,
+		offerPayService:              &offerPayService,
 	}
 
 	var err error
@@ -142,41 +149,30 @@ func (s *ServerState) update(config *configuration.ConfigurationState) (*ServerS
 	s.logger.Println("state update")
 	nextState := *s
 
-	if err := nextState.updateRepo(s, config); err != nil {
-		return nil, Wrap(err, "update repo")
+	callables := []struct {
+		update func(prev *ServerState, config *configuration.ConfigurationState) error
+		name   string
+	}{
+		{nextState.updateRepo, "Repo"},
+		{nextState.updateDataLoader, "DataLoader"},
+		{nextState.updateAuth, "Auth"},
+		{nextState.updateAuctionInteractor, "AuctionInteractor"},
+		{nextState.updateBidStepTableInteractor, "BidStepTableInteractor"},
+		{nextState.updateConsumerInteractor, "ConsumerInteractor"},
+		{nextState.updateOfferInteractor, "OfferInteractor"},
+		{nextState.updateOrganizerInteractor, "OrganizerInteractor"},
+		{nextState.updateProductInteractor, "ProductInteractor"},
+		{nextState.updateRoomInteractor, "RoomInteractor"},
+		{nextState.updateResolver, "Resolver"},
+		{nextState.updateSchema, "Schema"},
+		{nextState.updateGraphqlHandler, "GraphqlHandler"},
+		{nextState.updateEngine, "Engine"},
+		{nextState.updateServer, "Server"},
 	}
-	if err := nextState.updateDataLoader(s, config); err != nil {
-		return nil, Wrap(err, "update data loader")
-	}
-	if err := nextState.updateAuth(s, config); err != nil {
-		return nil, Wrap(err, "update auth")
-	}
-	if err := nextState.updateOrganizerInteractor(s, config); err != nil {
-		return nil, Wrap(err, "update organizer interactor")
-	}
-	if err := nextState.updateConsumerInteractor(s, config); err != nil {
-		return nil, Wrap(err, "update consumer interactor")
-	}
-	if err := nextState.updateRoomInteractor(s, config); err != nil {
-		return nil, Wrap(err, "update room interactor")
-	}
-	if err := nextState.updateProductInteractor(s, config); err != nil {
-		return nil, Wrap(err, "update room interactor")
-	}
-	if err := nextState.updateResolver(s, config); err != nil {
-		return nil, Wrap(err, "update resolver")
-	}
-	if err := nextState.updateSchema(s, config); err != nil {
-		return nil, Wrap(err, "update schema")
-	}
-	if err := nextState.updateGraphqlHandler(s, config); err != nil {
-		return nil, Wrap(err, "update graphql handler")
-	}
-	if err := nextState.updateEngine(s, config); err != nil {
-		return nil, Wrap(err, "update engine")
-	}
-	if err := nextState.updateServer(s, config); err != nil {
-		return nil, Wrap(err, "update server")
+	for _, v := range callables {
+		if err := v.update(s, config); err != nil {
+			return nil, Wrapf(err, "update %s", v.name)
+		}
 	}
 
 	return &nextState, nil
@@ -417,6 +413,49 @@ func (s *ServerState) updateProductInteractor(prev *ServerState, config *configu
 	return nil
 }
 
+func (s *ServerState) updateAuctionInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	eventBusChanged := s.eventBus != prev.eventBus
+	shouldReset := repoChanged || eventBusChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	auctionInteractor := interactors.NewAuctionInteractor(s.repo, s.eventBus)
+	s.auctionInteractor = &auctionInteractor
+	return nil
+}
+
+func (s *ServerState) updateBidStepTableInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	shouldReset := repoChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	bidStepTableInteractor := interactors.NewBidStepTableInteractor(s.repo)
+	s.bidStepTableInteractor = &bidStepTableInteractor
+	return nil
+}
+
+func (s *ServerState) updateOfferInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	eventBusChanged := s.eventBus != prev.eventBus
+	offerPayServiceChanged := s.offerPayService != prev.offerPayService
+
+	shouldReset := repoChanged || eventBusChanged || offerPayServiceChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	offerInteractor := interactors.NewOfferInteractor(s.repo, s.eventBus, s.offerPayService)
+	s.offerInteractor = &offerInteractor
+	return nil
+}
+
 func (s *ServerState) updateResolver(prev *ServerState, config *configuration.ConfigurationState) error {
 	organizerInteractorChanged := s.organizerInteractor != prev.organizerInteractor
 	consumerInteractorChanged := s.consumerInteractor != prev.consumerInteractor
@@ -436,10 +475,13 @@ func (s *ServerState) updateResolver(prev *ServerState, config *configuration.Co
 	}
 
 	resolver := resolvers.New(
-		s.organizerInteractor,
+		s.auctionInteractor,
+		s.bidStepTableInteractor,
 		s.consumerInteractor,
-		s.roomInteractor,
+		s.offerInteractor,
+		s.organizerInteractor,
 		s.productInteractor,
+		s.roomInteractor,
 		s.auth,
 		s.dataloader,
 		s.eventBus,

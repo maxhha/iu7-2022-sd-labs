@@ -40,7 +40,7 @@ tasks:
     vars:
       SCRIPT: codegen/dataloader/main.go
       OUT: ./adapters/dataloader/dataloader_gen.go
-      ENTITIES: Organizer,Room,Consumer
+      ENTITIES: Auction,BidStepTable,Consumer,Offer,Organizer,Product,Room
     cmds:
       - go run {{.SCRIPT}} --out {{.OUT}} --entities {{.ENTITIES}}
     sources:

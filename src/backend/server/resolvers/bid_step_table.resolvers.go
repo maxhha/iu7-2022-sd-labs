@@ -5,32 +5,23 @@ package resolvers
 
 import (
 	"context"
-	"fmt"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
 )
 
-func (r *bidStepRowResolver) FromAmount(ctx context.Context, obj *models.BidStepRow) (float64, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
-func (r *bidStepRowResolver) Step(ctx context.Context, obj *models.BidStepRow) (float64, error) {
-	panic(fmt.Errorf("not implemented"))
-}
-
 func (r *bidStepTableResolver) Organizer(ctx context.Context, obj *models.BidStepTable) (*models.Organizer, error) {
-	panic(fmt.Errorf("not implemented"))
+	ent, err := r.dataloader.LoadOrganizer(ctx, obj.OrganizerID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader LoadOrganizer")
+	}
+	return (&models.Organizer{}).From(&ent), nil
 }
 
 func (r *queryResolver) BidStepTables(ctx context.Context, first *int, after *string, filter *models.BidStepTableFilter) (*models.BidStepTableConnection, error) {
-	panic(fmt.Errorf("not implemented"))
+	return r.generatedPagination__BidStepTables(ctx, first, after, filter)
 }
-
-// BidStepRow returns generated.BidStepRowResolver implementation.
-func (r *Resolver) BidStepRow() generated.BidStepRowResolver { return &bidStepRowResolver{r} }
 
 // BidStepTable returns generated.BidStepTableResolver implementation.
 func (r *Resolver) BidStepTable() generated.BidStepTableResolver { return &bidStepTableResolver{r} }
 
-type bidStepRowResolver struct{ *Resolver }
 type bidStepTableResolver struct{ *Resolver }
