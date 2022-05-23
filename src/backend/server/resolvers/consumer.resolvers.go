@@ -90,8 +90,4 @@ func (r *queryResolver) Consumers(ctx context.Context, first *int, after *string
 // Consumer returns generated.ConsumerResolver implementation.
 func (r *Resolver) Consumer() generated.ConsumerResolver { return &consumerResolver{r} }
 
-// Mutation returns generated.MutationResolver implementation.
-func (r *Resolver) Mutation() generated.MutationResolver { return &mutationResolver{r} }
-
 type consumerResolver struct{ *Resolver }
-type mutationResolver struct{ *Resolver }

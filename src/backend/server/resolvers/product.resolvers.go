@@ -6,6 +6,7 @@ package resolvers
 import (
 	"context"
 	"fmt"
+	"iu7-2022-sd-labs/buisness/ports/interactors"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
 	"iu7-2022-sd-labs/server/ports"
@@ -28,11 +29,50 @@ func (r *mutationResolver) CreateProduct(ctx context.Context, name string) (*mod
 }
 
 func (r *mutationResolver) DeleteProduct(ctx context.Context, productID string) (bool, error) {
-	panic(fmt.Errorf("not implemented"))
+	organizer, err := ports.ForOrganizer(ctx)
+	if err != nil {
+		return false, err
+	}
+
+	product, err := r.dataloader.LoadProduct(ctx, productID)
+	if err != nil {
+		return false, Wrap(err, "dataloader.LoadProduct")
+	}
+
+	if product.OrganizerID() != organizer.ID() {
+		return false, ErrDenied
+	}
+
+	err = r.productInteractor.Delete(productID)
+	return err == nil, Wrap(err, "productInteractor.Delete")
 }
 
 func (r *mutationResolver) UpdateProduct(ctx context.Context, input models.UpdateProductInput) (*models.ProductResult, error) {
-	panic(fmt.Errorf("not implemented"))
+	organizer, err := ports.ForOrganizer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	product, err := r.dataloader.LoadProduct(ctx, input.ProductID)
+	if err != nil {
+		return nil, Wrap(err, "dataloader.LoadProduct")
+	}
+
+	if product.OrganizerID() != organizer.ID() {
+		return nil, ErrDenied
+	}
+
+	product, err = r.productInteractor.Update(&interactors.ProductUpdateParams{
+		ID:   input.ProductID,
+		Name: input.Name,
+	})
+	if err != nil {
+		return nil, Wrap(err, "productInteractor.Update")
+	}
+
+	return &models.ProductResult{
+		Product: (&models.Product{}).From(&product),
+	}, nil
 }
 
 func (r *productResolver) Organizer(ctx context.Context, obj *models.Product) (*models.Organizer, error) {

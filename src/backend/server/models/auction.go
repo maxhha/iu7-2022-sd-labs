@@ -14,9 +14,9 @@ type Auction struct {
 	RoomID         string
 	ProductID      string
 	BidStepTableID string
-	MinAmount      decimal.NullDecimal `json:"minAmount"`
-	StartedAt      time.Time           `json:"startedAt"`
-	FinishedAt     sql.NullTime        `json:"finishedAt"`
+	MinAmount      decimal.Decimal `json:"minAmount"`
+	StartedAt      time.Time       `json:"startedAt"`
+	FinishedAt     sql.NullTime    `json:"finishedAt"`
 }
 
 func (obj *Auction) From(ent *entities.Auction) *Auction {
@@ -28,12 +28,7 @@ func (obj *Auction) From(ent *entities.Auction) *Auction {
 	obj.RoomID = ent.RoomID()
 	obj.ProductID = ent.ProductID()
 	obj.BidStepTableID = ent.BidStepTableID()
-	if ent.MinAmount().IsZero() {
-		obj.MinAmount.Valid = false
-	} else {
-		obj.MinAmount.Valid = true
-		obj.MinAmount.Decimal = ent.MinAmount()
-	}
+	obj.MinAmount = ent.MinAmount()
 	obj.StartedAt = ent.StartedAt()
 	obj.FinishedAt = sql.NullTime(ent.FinishedAt())
 

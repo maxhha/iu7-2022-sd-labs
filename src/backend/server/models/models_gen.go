@@ -2,6 +2,12 @@
 
 package models
 
+import (
+	"time"
+
+	"github.com/shopspring/decimal"
+)
+
 type Viewer interface {
 	IsViewer()
 }
@@ -24,6 +30,11 @@ type AuctionFilter struct {
 
 type AuctionResult struct {
 	Auction *Auction `json:"auction"`
+}
+
+type BidStepRowInput struct {
+	FromAmount decimal.Decimal `json:"fromAmount"`
+	Step       decimal.Decimal `json:"step"`
 }
 
 type BidStepTableConnection struct {
@@ -152,6 +163,39 @@ type RoomFilter struct {
 
 type RoomResult struct {
 	Room *Room `json:"room"`
+}
+
+type CancelAuctionInput struct {
+	AuctionID string `json:"auctionId"`
+	Reason    string `json:"reason"`
+}
+
+type CreateAuctionInput struct {
+	RoomID         string          `json:"roomId"`
+	BidStepTableID string          `json:"bidStepTableId"`
+	ProductID      string          `json:"productId"`
+	StartedAt      time.Time       `json:"startedAt"`
+	MinAmount      decimal.Decimal `json:"minAmount"`
+}
+
+type CreateBidStepTableInput struct {
+	Name string            `json:"name"`
+	Rows []BidStepRowInput `json:"rows"`
+}
+
+type CreateOfferInput struct {
+	AuctionID string          `json:"auctionId"`
+	Amount    decimal.Decimal `json:"amount"`
+}
+
+type PayOfferResult struct {
+	Link string `json:"link"`
+}
+
+type UpdateBidStepTableInput struct {
+	BidStepTableID string            `json:"bidStepTableId"`
+	Name           string            `json:"name"`
+	Rows           []BidStepRowInput `json:"rows"`
 }
 
 type UpdateProductInput struct {

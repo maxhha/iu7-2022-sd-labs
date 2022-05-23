@@ -2,6 +2,7 @@ package models
 
 import (
 	"iu7-2022-sd-labs/buisness/entities"
+	"iu7-2022-sd-labs/buisness/ports/interactors"
 	"iu7-2022-sd-labs/buisness/ports/repositories"
 
 	"github.com/shopspring/decimal"
@@ -79,4 +80,15 @@ func BidStepRowsArrayFromEntites(ents []entities.BidStepRow) []BidStepRow {
 		objs = append(objs, obj)
 	}
 	return objs
+}
+
+func BidStepRowInputsArrayIntoInteractorRows(objs []BidStepRowInput) []interactors.BidStepRow {
+	rows := make([]interactors.BidStepRow, 0, len(objs))
+	for _, obj := range objs {
+		rows = append(rows, interactors.BidStepRow{
+			FromAmount: obj.FromAmount,
+			Step:       obj.Step,
+		})
+	}
+	return rows
 }

@@ -29,3 +29,17 @@ input OfferFilter {
 extend type Query {
   offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
 }
+
+input createOfferInput {
+  auctionId: ID!
+  amount: Float!
+}
+
+type payOfferResult {
+  link: String!
+}
+
+extend type Mutation {
+  createOffer(input: createOfferInput!): OfferResult!
+  payOffer(offerId: ID!): payOfferResult!
+}

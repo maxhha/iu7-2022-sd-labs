@@ -3,7 +3,7 @@ type Auction {
   room: Room!
   product: Product!
   bidStepTable: BidStepTable!
-  minAmount: Float
+  minAmount: Float!
   startedAt: DateTime!
   finishedAt: DateTime
   offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
@@ -31,4 +31,22 @@ input AuctionFilter {
 
 extend type Query {
   auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
+}
+
+input createAuctionInput {
+  roomId: ID!
+  bidStepTableId: ID!
+  productId: ID!
+  startedAt: DateTime!
+  minAmount: Float!
+}
+
+input cancelAuctionInput {
+  auctionId: ID!
+  reason: String!
+}
+
+extend type Mutation {
+  createAuction(input: createAuctionInput!): AuctionResult!
+  cancelAuction(input: cancelAuctionInput!): Boolean!
 }
