@@ -2,6 +2,7 @@ package main
 
 import (
 	"iu7-2022-sd-labs/configuration"
+	"iu7-2022-sd-labs/configuration/env_configuration"
 	"iu7-2022-sd-labs/configuration/file_configuration"
 	"iu7-2022-sd-labs/server"
 	"log"
@@ -9,13 +10,21 @@ import (
 )
 
 func main() {
+	var (
+		source <-chan configuration.ConfigurationState
+		stop   func()
+		err    error
+	)
+	logger := log.Default()
 	configFile, exists := os.LookupEnv("CONFIG_FILE")
-	if !exists {
-		log.Fatalln("environment variable CONFIG_FILE is not set")
+
+	if exists {
+		logger.Println("CONFIG_FILE present in env. Use file configuration source.")
+		source, stop, err = file_configuration.NewFileConfigurationSource(logger, configFile)
+	} else {
+		source, stop, err = env_configuration.NewEnvConfigurationSource(logger)
 	}
 
-	logger := log.Default()
-	source, stop, err := file_configuration.NewFileConfigurationSource(logger, configFile)
 	if err != nil {
 		panic(err)
 	}
