@@ -14,6 +14,7 @@ import (
 type Resolver struct {
 	auctionInteractor      interactors.AuctionInteractor
 	bidStepTableInteractor interactors.BidStepTableInteractor
+	blockListInteractor    interactors.BlockListInteractor
 	consumerInteractor     interactors.ConsumerInteractor
 	offerInteractor        interactors.OfferInteractor
 	organizerInteractor    interactors.OrganizerInteractor
@@ -28,6 +29,7 @@ type Resolver struct {
 func New(
 	auctionInteractor interactors.AuctionInteractor,
 	bidStepTableInteractor interactors.BidStepTableInteractor,
+	blockListInteractor interactors.BlockListInteractor,
 	consumerInteractor interactors.ConsumerInteractor,
 	offerInteractor interactors.OfferInteractor,
 	organizerInteractor interactors.OrganizerInteractor,
@@ -41,6 +43,7 @@ func New(
 	return Resolver{
 		auctionInteractor,
 		bidStepTableInteractor,
+		blockListInteractor,
 		consumerInteractor,
 		offerInteractor,
 		organizerInteractor,

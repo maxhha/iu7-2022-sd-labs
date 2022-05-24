@@ -8,6 +8,7 @@ import (
 type Repository struct {
 	AuctionMock      *AuctionRepository
 	BidStepTableMock *BidStepTableRepository
+	BlockListMock    *BlockListRepository
 	ConsumerMock     *ConsumerRepository
 	OfferMock        *OfferRepository
 	OrganizerMock    *OrganizerRepository
@@ -19,6 +20,7 @@ func NewRepository(t testing.TB) *Repository {
 	return &Repository{
 		NewAuctionRepository(t),
 		NewBidStepTableRepository(t),
+		NewBlockListRepository(t),
 		NewConsumerRepository(t),
 		NewOfferRepository(t),
 		NewOrganizerRepository(t),
@@ -32,6 +34,9 @@ func (r *Repository) Auction() repositories.AuctionRepository {
 }
 func (r *Repository) BidStepTable() repositories.BidStepTableRepository {
 	return r.BidStepTableMock
+}
+func (r *Repository) BlockList() repositories.BlockListRepository {
+	return r.BlockListMock
 }
 func (r *Repository) Consumer() repositories.ConsumerRepository {
 	return r.ConsumerMock

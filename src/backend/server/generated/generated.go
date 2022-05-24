@@ -130,6 +130,7 @@ type ComplexityRoot struct {
 	}
 
 	Mutation struct {
+		BlockConsumer      func(childComplexity int, consumerID string) int
 		CancelAuction      func(childComplexity int, input models.CancelAuctionInput) int
 		CreateAuction      func(childComplexity int, input models.CreateAuctionInput) int
 		CreateBidStepTable func(childComplexity int, input models.CreateBidStepTableInput) int
@@ -143,6 +144,7 @@ type ComplexityRoot struct {
 		EnterRoom          func(childComplexity int, roomID string) int
 		ExitRoom           func(childComplexity int, roomID string) int
 		PayOffer           func(childComplexity int, offerID string) int
+		UnblockConsumer    func(childComplexity int, consumerID string) int
 		UpdateBidStepTable func(childComplexity int, input models.UpdateBidStepTableInput) int
 		UpdateConsumer     func(childComplexity int, nickname string, form map[string]interface{}) int
 		UpdateOrganizer    func(childComplexity int, name string) int
@@ -173,6 +175,7 @@ type ComplexityRoot struct {
 
 	Organizer struct {
 		BidStepTables func(childComplexity int, first *int, after *string, filter *models.BidStepTableFilter) int
+		BlockList     func(childComplexity int) int
 		ID            func(childComplexity int) int
 		Name          func(childComplexity int) int
 		Products      func(childComplexity int, first *int, after *string, filter *models.ProductFilter) int
@@ -294,6 +297,8 @@ type MutationResolver interface {
 	PayOffer(ctx context.Context, offerID string) (*models.PayOfferResult, error)
 	CreateOrganizer(ctx context.Context, name string) (*models.TokenResult, error)
 	UpdateOrganizer(ctx context.Context, name string) (*models.OrganizerResult, error)
+	BlockConsumer(ctx context.Context, consumerID string) (*models.OrganizerResult, error)
+	UnblockConsumer(ctx context.Context, consumerID string) (*models.OrganizerResult, error)
 	CreateProduct(ctx context.Context, name string) (*models.ProductResult, error)
 	DeleteProduct(ctx context.Context, productID string) (bool, error)
 	UpdateProduct(ctx context.Context, input models.UpdateProductInput) (*models.ProductResult, error)
@@ -307,6 +312,7 @@ type OfferResolver interface {
 type OrganizerResolver interface {
 	BidStepTables(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.BidStepTableFilter) (*models.BidStepTableConnection, error)
 	Products(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.ProductFilter) (*models.ProductConnection, error)
+	BlockList(ctx context.Context, obj *models.Organizer) ([]models.Consumer, error)
 }
 type ProductResolver interface {
 	Organizer(ctx context.Context, obj *models.Product) (*models.Organizer, error)
@@ -599,6 +605,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.ConsumerResult.Consumer(childComplexity), true
 
+	case "Mutation.blockConsumer":
+		if e.complexity.Mutation.BlockConsumer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_blockConsumer_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.BlockConsumer(childComplexity, args["consumerID"].(string)), true
+
 	case "Mutation.cancelAuction":
 		if e.complexity.Mutation.CancelAuction == nil {
 			break
@@ -755,6 +773,18 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 
 		return e.complexity.Mutation.PayOffer(childComplexity, args["offerId"].(string)), true
 
+	case "Mutation.unblockConsumer":
+		if e.complexity.Mutation.UnblockConsumer == nil {
+			break
+		}
+
+		args, err := ec.field_Mutation_unblockConsumer_args(context.TODO(), rawArgs)
+		if err != nil {
+			return 0, false
+		}
+
+		return e.complexity.Mutation.UnblockConsumer(childComplexity, args["consumerID"].(string)), true
+
 	case "Mutation.updateBidStepTable":
 		if e.complexity.Mutation.UpdateBidStepTable == nil {
 			break
@@ -884,6 +914,13 @@ func (e *executableSchema) Complexity(typeName, field string, childComplexity in
 		}
 
 		return e.complexity.Organizer.BidStepTables(childComplexity, args["first"].(*int), args["after"].(*string), args["filter"].(*models.BidStepTableFilter)), true
+
+	case "Organizer.blockList":
+		if e.complexity.Organizer.BlockList == nil {
+			break
+		}
+
+		return e.complexity.Organizer.BlockList(childComplexity), true
 
 	case "Organizer.id":
 		if e.complexity.Organizer.ID == nil {
@@ -1563,6 +1600,7 @@ extend type Mutation {
     filter: BidStepTableFilter
   ): BidStepTableConnection!
   products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
+  blockList: [Consumer!]!
 }
 
 type OrganizerResult {
@@ -1595,6 +1633,8 @@ extend type Query {
 extend type Mutation {
   createOrganizer(name: String!): TokenResult!
   updateOrganizer(name: String!): OrganizerResult!
+  blockConsumer(consumerID: ID!): OrganizerResult!
+  unblockConsumer(consumerID: ID!): OrganizerResult!
 }
 `, BuiltIn: false},
 	{Name: "server/schema/product.graphqls", Input: `type Product {
@@ -1792,6 +1832,21 @@ func (ec *executionContext) field_Consumer_rooms_args(ctx context.Context, rawAr
 		}
 	}
 	args["filter"] = arg2
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_blockConsumer_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["consumerID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consumerID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["consumerID"] = arg0
 	return args, nil
 }
 
@@ -2005,6 +2060,21 @@ func (ec *executionContext) field_Mutation_payOffer_args(ctx context.Context, ra
 		}
 	}
 	args["offerId"] = arg0
+	return args, nil
+}
+
+func (ec *executionContext) field_Mutation_unblockConsumer_args(ctx context.Context, rawArgs map[string]interface{}) (map[string]interface{}, error) {
+	var err error
+	args := map[string]interface{}{}
+	var arg0 string
+	if tmp, ok := rawArgs["consumerID"]; ok {
+		ctx := graphql.WithPathContext(ctx, graphql.NewPathWithField("consumerID"))
+		arg0, err = ec.unmarshalNID2string(ctx, tmp)
+		if err != nil {
+			return nil, err
+		}
+	}
+	args["consumerID"] = arg0
 	return args, nil
 }
 
@@ -3403,6 +3473,8 @@ func (ec *executionContext) fieldContext_BidStepTable_organizer(ctx context.Cont
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
 			case "products":
 				return ec.fieldContext_Organizer_products(ctx, field)
+			case "blockList":
+				return ec.fieldContext_Organizer_blockList(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -4923,6 +4995,124 @@ func (ec *executionContext) fieldContext_Mutation_updateOrganizer(ctx context.Co
 	return fc, nil
 }
 
+func (ec *executionContext) _Mutation_blockConsumer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_blockConsumer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().BlockConsumer(rctx, fc.Args["consumerID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.OrganizerResult)
+	fc.Result = res
+	return ec.marshalNOrganizerResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOrganizerResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_blockConsumer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "orgainzer":
+				return ec.fieldContext_OrganizerResult_orgainzer(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrganizerResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_blockConsumer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
+func (ec *executionContext) _Mutation_unblockConsumer(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Mutation_unblockConsumer(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Mutation().UnblockConsumer(rctx, fc.Args["consumerID"].(string))
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.(*models.OrganizerResult)
+	fc.Result = res
+	return ec.marshalNOrganizerResult2ᚖiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐOrganizerResult(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Mutation_unblockConsumer(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Mutation",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "orgainzer":
+				return ec.fieldContext_OrganizerResult_orgainzer(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type OrganizerResult", field.Name)
+		},
+	}
+	defer func() {
+		if r := recover(); r != nil {
+			err = ec.Recover(ctx, r)
+			ec.Error(ctx, err)
+		}
+	}()
+	ctx = graphql.WithFieldContext(ctx, fc)
+	if fc.Args, err = ec.field_Mutation_unblockConsumer_args(ctx, field.ArgumentMap(ec.Variables)); err != nil {
+		ec.Error(ctx, err)
+		return
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _Mutation_createProduct(ctx context.Context, field graphql.CollectedField) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_Mutation_createProduct(ctx, field)
 	if err != nil {
@@ -5930,6 +6120,62 @@ func (ec *executionContext) fieldContext_Organizer_products(ctx context.Context,
 	return fc, nil
 }
 
+func (ec *executionContext) _Organizer_blockList(ctx context.Context, field graphql.CollectedField, obj *models.Organizer) (ret graphql.Marshaler) {
+	fc, err := ec.fieldContext_Organizer_blockList(ctx, field)
+	if err != nil {
+		return graphql.Null
+	}
+	ctx = graphql.WithFieldContext(ctx, fc)
+	defer func() {
+		if r := recover(); r != nil {
+			ec.Error(ctx, ec.Recover(ctx, r))
+			ret = graphql.Null
+		}
+	}()
+	resTmp, err := ec.ResolverMiddleware(ctx, func(rctx context.Context) (interface{}, error) {
+		ctx = rctx // use context from middleware stack in children
+		return ec.resolvers.Organizer().BlockList(rctx, obj)
+	})
+	if err != nil {
+		ec.Error(ctx, err)
+		return graphql.Null
+	}
+	if resTmp == nil {
+		if !graphql.HasFieldError(ctx, fc) {
+			ec.Errorf(ctx, "must not be null")
+		}
+		return graphql.Null
+	}
+	res := resTmp.([]models.Consumer)
+	fc.Result = res
+	return ec.marshalNConsumer2ᚕiu7ᚑ2022ᚑsdᚑlabsᚋserverᚋmodelsᚐConsumerᚄ(ctx, field.Selections, res)
+}
+
+func (ec *executionContext) fieldContext_Organizer_blockList(ctx context.Context, field graphql.CollectedField) (fc *graphql.FieldContext, err error) {
+	fc = &graphql.FieldContext{
+		Object:     "Organizer",
+		Field:      field,
+		IsMethod:   true,
+		IsResolver: true,
+		Child: func(ctx context.Context, field graphql.CollectedField) (*graphql.FieldContext, error) {
+			switch field.Name {
+			case "id":
+				return ec.fieldContext_Consumer_id(ctx, field)
+			case "nickname":
+				return ec.fieldContext_Consumer_nickname(ctx, field)
+			case "form":
+				return ec.fieldContext_Consumer_form(ctx, field)
+			case "rooms":
+				return ec.fieldContext_Consumer_rooms(ctx, field)
+			case "offers":
+				return ec.fieldContext_Consumer_offers(ctx, field)
+			}
+			return nil, fmt.Errorf("no field named %q was found under type Consumer", field.Name)
+		},
+	}
+	return fc, nil
+}
+
 func (ec *executionContext) _OrganizerConnection_pageInfo(ctx context.Context, field graphql.CollectedField, obj *models.OrganizerConnection) (ret graphql.Marshaler) {
 	fc, err := ec.fieldContext_OrganizerConnection_pageInfo(ctx, field)
 	if err != nil {
@@ -6125,6 +6371,8 @@ func (ec *executionContext) fieldContext_OrganizerConnectionEdge_node(ctx contex
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
 			case "products":
 				return ec.fieldContext_Organizer_products(ctx, field)
+			case "blockList":
+				return ec.fieldContext_Organizer_blockList(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -6179,6 +6427,8 @@ func (ec *executionContext) fieldContext_OrganizerResult_orgainzer(ctx context.C
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
 			case "products":
 				return ec.fieldContext_Organizer_products(ctx, field)
+			case "blockList":
+				return ec.fieldContext_Organizer_blockList(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -6491,6 +6741,8 @@ func (ec *executionContext) fieldContext_Product_organizer(ctx context.Context, 
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
 			case "products":
 				return ec.fieldContext_Organizer_products(ctx, field)
+			case "blockList":
+				return ec.fieldContext_Organizer_blockList(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -7591,6 +7843,8 @@ func (ec *executionContext) fieldContext_Room_organizer(ctx context.Context, fie
 				return ec.fieldContext_Organizer_bidStepTables(ctx, field)
 			case "products":
 				return ec.fieldContext_Organizer_products(ctx, field)
+			case "blockList":
+				return ec.fieldContext_Organizer_blockList(ctx, field)
 			}
 			return nil, fmt.Errorf("no field named %q was found under type Organizer", field.Name)
 		},
@@ -11203,6 +11457,24 @@ func (ec *executionContext) _Mutation(ctx context.Context, sel ast.SelectionSet)
 			if out.Values[i] == graphql.Null {
 				invalids++
 			}
+		case "blockConsumer":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_blockConsumer(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
+		case "unblockConsumer":
+
+			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
+				return ec._Mutation_unblockConsumer(ctx, field)
+			})
+
+			if out.Values[i] == graphql.Null {
+				invalids++
+			}
 		case "createProduct":
 
 			out.Values[i] = ec.OperationContext.RootResolverMiddleware(innerCtx, func(ctx context.Context) (res graphql.Marshaler) {
@@ -11493,6 +11765,26 @@ func (ec *executionContext) _Organizer(ctx context.Context, sel ast.SelectionSet
 					}
 				}()
 				res = ec._Organizer_products(ctx, field, obj)
+				if res == graphql.Null {
+					atomic.AddUint32(&invalids, 1)
+				}
+				return res
+			}
+
+			out.Concurrently(i, func() graphql.Marshaler {
+				return innerFunc(ctx)
+
+			})
+		case "blockList":
+			field := field
+
+			innerFunc := func(ctx context.Context) (res graphql.Marshaler) {
+				defer func() {
+					if r := recover(); r != nil {
+						ec.Error(ctx, ec.Recover(ctx, r))
+					}
+				}()
+				res = ec._Organizer_blockList(ctx, field, obj)
 				if res == graphql.Null {
 					atomic.AddUint32(&invalids, 1)
 				}

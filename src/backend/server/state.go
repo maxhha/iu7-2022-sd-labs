@@ -46,6 +46,7 @@ type ServerState struct {
 	offerPayService              *offer_pay_service.OfferPayService
 	auctionInteractor            *interactors.AuctionInteractor
 	bidStepTableInteractor       *interactors.BidStepTableInteractor
+	blockListInteractor          *interactors.BlockListInteractor
 	consumerInteractor           *interactors.ConsumerInteractor
 	offerInteractor              *interactors.OfferInteractor
 	organizerInteractor          *interactors.OrganizerInteractor
@@ -163,6 +164,7 @@ func (s *ServerState) update(config *configuration.ConfigurationState) (*ServerS
 		{nextState.updateOrganizerInteractor, "OrganizerInteractor"},
 		{nextState.updateProductInteractor, "ProductInteractor"},
 		{nextState.updateRoomInteractor, "RoomInteractor"},
+		{nextState.updateBlockListInteractor, "BlockListInteractor"},
 		{nextState.updateResolver, "Resolver"},
 		{nextState.updateSchema, "Schema"},
 		{nextState.updateGraphqlHandler, "GraphqlHandler"},
@@ -440,6 +442,19 @@ func (s *ServerState) updateBidStepTableInteractor(prev *ServerState, config *co
 	return nil
 }
 
+func (s *ServerState) updateBlockListInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
+	repoChanged := s.repo != prev.repo
+	shouldReset := repoChanged
+
+	if !shouldReset {
+		return nil
+	}
+
+	blockListInteractor := interactors.NewBlockListInteractor(s.repo)
+	s.blockListInteractor = &blockListInteractor
+	return nil
+}
+
 func (s *ServerState) updateOfferInteractor(prev *ServerState, config *configuration.ConfigurationState) error {
 	repoChanged := s.repo != prev.repo
 	eventBusChanged := s.eventBus != prev.eventBus
@@ -477,6 +492,7 @@ func (s *ServerState) updateResolver(prev *ServerState, config *configuration.Co
 	resolver := resolvers.New(
 		s.auctionInteractor,
 		s.bidStepTableInteractor,
+		s.blockListInteractor,
 		s.consumerInteractor,
 		s.offerInteractor,
 		s.organizerInteractor,

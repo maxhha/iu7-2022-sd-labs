@@ -7,6 +7,7 @@ type Organizer {
     filter: BidStepTableFilter
   ): BidStepTableConnection!
   products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
+  blockList: [Consumer!]!
 }
 
 type OrganizerResult {
@@ -39,4 +40,6 @@ extend type Query {
 extend type Mutation {
   createOrganizer(name: String!): TokenResult!
   updateOrganizer(name: String!): OrganizerResult!
+  blockConsumer(consumerID: ID!): OrganizerResult!
+  unblockConsumer(consumerID: ID!): OrganizerResult!
 }

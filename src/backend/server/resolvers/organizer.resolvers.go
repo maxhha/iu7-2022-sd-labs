@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"iu7-2022-sd-labs/buisness/ports/interactors"
+	"iu7-2022-sd-labs/buisness/ports/repositories"
 	"iu7-2022-sd-labs/server/generated"
 	"iu7-2022-sd-labs/server/models"
 	"iu7-2022-sd-labs/server/ports"
@@ -47,6 +48,38 @@ func (r *mutationResolver) UpdateOrganizer(ctx context.Context, name string) (*m
 	}, nil
 }
 
+func (r *mutationResolver) BlockConsumer(ctx context.Context, consumerID string) (*models.OrganizerResult, error) {
+	organizer, err := ports.ForOrganizer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.blockListInteractor.AddConsumer(organizer.ID(), consumerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.OrganizerResult{
+		Orgainzer: (&models.Organizer{}).From(&organizer),
+	}, nil
+}
+
+func (r *mutationResolver) UnblockConsumer(ctx context.Context, consumerID string) (*models.OrganizerResult, error) {
+	organizer, err := ports.ForOrganizer(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	_, err = r.blockListInteractor.RemoveConsumer(organizer.ID(), consumerID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &models.OrganizerResult{
+		Orgainzer: (&models.Organizer{}).From(&organizer),
+	}, nil
+}
+
 func (r *organizerResolver) BidStepTables(ctx context.Context, obj *models.Organizer, first *int, after *string, filter *models.BidStepTableFilter) (*models.BidStepTableConnection, error) {
 	if len(filter.Organizers) > 0 {
 		return nil, fmt.Errorf("filter organizers must be empty")
@@ -61,6 +94,28 @@ func (r *organizerResolver) Products(ctx context.Context, obj *models.Organizer,
 	}
 	filter.Organizers = []string{obj.ID}
 	return r.generatedPagination__Products(ctx, first, after, filter)
+}
+
+func (r *organizerResolver) BlockList(ctx context.Context, obj *models.Organizer) ([]models.Consumer, error) {
+	blockLists, err := r.blockListInteractor.Find(&repositories.BlockListFindParams{
+		Filter: &repositories.BlockListFilter{
+			OrganizerIDs: []string{obj.ID},
+		},
+	})
+	if err != nil {
+		return nil, Wrap(err, "blockListInteractor.Find")
+	}
+
+	if len(blockLists) == 0 {
+		return nil, nil
+	}
+
+	ents, err := r.dataloader.LoadManyConsumers(ctx, blockLists[0].ConsumerIDs())
+	if err != nil {
+		return nil, Wrap(err, "dataloader.LoadManyConsumers")
+	}
+
+	return models.ConsumerArrayFromEntites(ents), nil
 }
 
 func (r *queryResolver) Organizers(ctx context.Context, first *int, after *string, filter *models.OrganizerFilter) (*models.OrganizerConnection, error) {
