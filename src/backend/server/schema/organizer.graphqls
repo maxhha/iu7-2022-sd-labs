@@ -1,0 +1,45 @@
+type Organizer {
+  id: ID!
+  name: String!
+  bidStepTables(
+    first: Int
+    after: ID
+    filter: BidStepTableFilter
+  ): BidStepTableConnection!
+  products(first: Int, after: ID, filter: ProductFilter): ProductConnection!
+  blockList: [Consumer!]!
+}
+
+type OrganizerResult {
+  orgainzer: Organizer!
+}
+
+type OrganizerConnectionEdge {
+  cursor: ID!
+  node: Organizer!
+}
+
+type OrganizerConnection {
+  pageInfo: PageInfo!
+  edges: [OrganizerConnectionEdge!]!
+}
+
+input OrganizerFilter {
+  ids: [ID!]
+  name: String
+}
+
+extend type Query {
+  organizers(
+    first: Int
+    after: ID
+    filter: OrganizerFilter
+  ): OrganizerConnection!
+}
+
+extend type Mutation {
+  createOrganizer(name: String!): TokenResult!
+  updateOrganizer(name: String!): OrganizerResult!
+  blockConsumer(consumerID: ID!): OrganizerResult!
+  unblockConsumer(consumerID: ID!): OrganizerResult!
+}

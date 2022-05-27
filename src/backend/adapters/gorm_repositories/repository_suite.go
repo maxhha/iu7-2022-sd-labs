@@ -42,7 +42,7 @@ func (s *RepositorySuite) SetupTest() {
 		SkipDefaultTransaction: true,
 	})
 	require.NoError(s.T(), err)
-	s.repo = NewGORMRepository(s.DB)
+	s.repo = New(s.DB)
 }
 
 func (s *RepositorySuite) TearDownTest() {

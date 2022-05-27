@@ -1,0 +1,19 @@
+debounceTime: 300ms
+allowOrigins:
+  - http://127.0.0.1:8080
+  - http://127.0.0.1:3000
+  - http://[::1]:3000
+  - http://[::1]:8080
+  - http://localhost:8080
+  - http://localhost:3000
+shutdownTimeout: 30s
+addr: :8081
+
+graphql:
+  queryCacheSize: 1000
+  automaticPersistedQueryCacheSize: 100
+  introspection: true
+
+gorm:
+  database: postgres
+  dsn: "host=localhost dbname=postgres user=admin password=12345"

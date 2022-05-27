@@ -3,3 +3,9 @@ out
 
 # Taskfile cache
 .task
+
+# Temporary directories
+tmp
+
+# Environment files
+*.env

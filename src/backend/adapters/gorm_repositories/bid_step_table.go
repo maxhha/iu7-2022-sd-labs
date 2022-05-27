@@ -146,6 +146,10 @@ func (r *BidStepTableRepository) filterQuery(query *gorm.DB, filter *repositorie
 		query = query.Where("name ~* ?", filter.NameQuery)
 	}
 
+	if len(filter.OrganizerIDs) > 0 {
+		query = query.Where("organizer_id in ", filter.OrganizerIDs)
+	}
+
 	return query, nil
 }
 

@@ -1,0 +1,38 @@
+type Consumer {
+  id: ID!
+  nickname: String!
+  form: Map
+  rooms(first: Int, after: ID, filter: RoomFilter): RoomConnection!
+  offers(first: Int, after: ID, filter: OfferFilter): OfferConnection!
+}
+
+type ConsumerResult {
+  consumer: Consumer!
+}
+
+type ConsumerConnectionEdge {
+  cursor: ID!
+  node: Consumer!
+}
+
+type ConsumerConnection {
+  pageInfo: PageInfo!
+  edges: [ConsumerConnectionEdge!]!
+}
+
+input ConsumerFilter {
+  ids: [ID!]
+  nickname: String
+  form: Dict
+}
+
+extend type Query {
+  consumers(first: Int, after: ID, filter: ConsumerFilter): ConsumerConnection!
+}
+
+extend type Mutation {
+  createConsumer(nickname: String!, form: Map!): TokenResult!
+  updateConsumer(nickname: String!, form: Map!): ConsumerResult!
+  enterRoom(roomId: ID!): Boolean!
+  exitRoom(roomId: ID!): Boolean!
+}

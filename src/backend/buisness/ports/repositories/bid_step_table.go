@@ -11,8 +11,9 @@ const (
 )
 
 type BidStepTableFilter struct {
-	IDs       []string
-	NameQuery string
+	IDs          []string
+	NameQuery    string
+	OrganizerIDs []string
 }
 
 type BidStepTableOrder struct {

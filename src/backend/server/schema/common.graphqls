@@ -1,0 +1,14 @@
+scalar Map
+scalar Dict
+scalar DateTime
+
+type TokenResult {
+  token: String!
+}
+
+type PageInfo {
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+  startCursor: ID
+  endCursor: ID
+}

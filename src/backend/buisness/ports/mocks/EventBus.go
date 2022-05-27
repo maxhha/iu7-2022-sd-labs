@@ -20,6 +20,34 @@ func (_m *EventBus) Notify(event bus.Event) {
 	_m.Called(event)
 }
 
+// Subscribe provides a mock function with given fields:
+func (_m *EventBus) Subscribe() (<-chan bus.Event, int) {
+	ret := _m.Called()
+
+	var r0 <-chan bus.Event
+	if rf, ok := ret.Get(0).(func() <-chan bus.Event); ok {
+		r0 = rf()
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(<-chan bus.Event)
+		}
+	}
+
+	var r1 int
+	if rf, ok := ret.Get(1).(func() int); ok {
+		r1 = rf()
+	} else {
+		r1 = ret.Get(1).(int)
+	}
+
+	return r0, r1
+}
+
+// Unsubscribe provides a mock function with given fields: id
+func (_m *EventBus) Unsubscribe(id int) {
+	_m.Called(id)
+}
+
 // NewEventBus creates a new instance of EventBus. It also registers the testing.TB interface on the mock and a cleanup function to assert the mocks expectations.
 func NewEventBus(t testing.TB) *EventBus {
 	mock := &EventBus{}

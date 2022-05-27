@@ -1,0 +1,5 @@
+union Viewer = Organizer | Consumer
+
+extend type Query {
+  viewer: Viewer
+}

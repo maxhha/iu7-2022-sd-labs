@@ -1,0 +1,43 @@
+type Room {
+  id: ID!
+  name: String!
+  address: String!
+  organizer: Organizer!
+  consumers: [Consumer!]!
+  auctions(first: Int, after: ID, filter: AuctionFilter): AuctionConnection!
+}
+
+type RoomResult {
+  room: Room!
+}
+
+type RoomConnectionEdge {
+  cursor: ID!
+  node: Room!
+}
+
+type RoomConnection {
+  pageInfo: PageInfo!
+  edges: [RoomConnectionEdge!]!
+}
+
+input RoomFilter {
+  ids: [ID!]
+  name: String
+  address: String
+  orgainzers: [ID!]
+  consumers: [ID!]
+}
+
+extend type Query {
+  rooms(first: Int, after: ID, filter: RoomFilter): RoomConnection!
+}
+
+extend type Mutation {
+  createRoom(name: String!, address: String!): RoomResult!
+  deleteRoom(roomId: ID!): Boolean!
+}
+
+extend type Subscription {
+  consumersInRoomUpdated(roomId: ID!): Room!
+}

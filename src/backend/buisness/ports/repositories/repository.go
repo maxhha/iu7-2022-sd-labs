@@ -8,5 +8,6 @@ type Repository interface {
 	Organizer() OrganizerRepository
 	Product() ProductRepository
 	Room() RoomRepository
+	BlockList() BlockListRepository
 	Atomic(fn func(tx Repository) error) error
 }
